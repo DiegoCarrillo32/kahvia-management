@@ -22,6 +22,7 @@ import {
   Calendar,
   CheckCircle,
   Plus,
+  ChevronRight,
 } from "lucide-react";
 import {
   getOrders,
@@ -30,12 +31,16 @@ import {
 } from "../services/orderService";
 import { Order, OrderStatus } from "../types/order";
 import CreateOrder from "./CreateOrder";
+import OrderDetail from "./OrderDetail";
+
+type ViewMode = "list" | "create" | "detail" | "edit";
 
 export default function Dashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
-  const [showCreate, setShowCreate] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const toast = useToast();
 
   const fetchOrders = useCallback(async () => {
@@ -43,16 +48,27 @@ export default function Dashboard() {
     try {
       const data = await getOrders(statusFilter || undefined);
       setOrders(data);
+      // If viewing a detail, refresh the selected order data
+      if (selectedOrder) {
+        const updated = data.find((o) => o.id === selectedOrder.id);
+        if (updated) setSelectedOrder(updated);
+        else {
+          // Order was deleted
+          setSelectedOrder(null);
+          setViewMode("list");
+        }
+      }
     } catch {
       toast({ title: "Error cargando órdenes", status: "error" });
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, toast]);
+  }, [statusFilter, toast, selectedOrder]);
 
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter]);
 
   const handleStatusChange = async (
     id: string,
@@ -94,25 +110,56 @@ export default function Dashboard() {
   };
 
   const formatDate = (timestamp: unknown) => {
-    if (!timestamp) return "No registrado";
+    if (!timestamp) return "—";
     const ts = timestamp as { toDate?: () => Date };
     return ts.toDate
       ? ts.toDate().toLocaleDateString()
       : new Date(timestamp as string | number | Date).toLocaleDateString();
   };
 
-  if (showCreate) {
+  // --- VIEW MODES ---
+
+  if (viewMode === "create") {
     return (
       <CreateOrder
-        onClose={() => setShowCreate(false)}
+        onClose={() => setViewMode("list")}
         onCreated={() => {
-          setShowCreate(false);
+          setViewMode("list");
           fetchOrders();
         }}
       />
     );
   }
 
+  if (viewMode === "edit" && selectedOrder) {
+    return (
+      <CreateOrder
+        editOrder={selectedOrder}
+        onClose={() => setViewMode("detail")}
+        onCreated={() => {
+          setViewMode("list");
+          fetchOrders();
+        }}
+      />
+    );
+  }
+
+  if (viewMode === "detail" && selectedOrder) {
+    return (
+      <OrderDetail
+        order={selectedOrder}
+        onBack={() => {
+          setSelectedOrder(null);
+          setViewMode("list");
+          fetchOrders();
+        }}
+        onEdit={() => setViewMode("edit")}
+        onRefresh={fetchOrders}
+      />
+    );
+  }
+
+  // --- LIST VIEW ---
   return (
     <Box p={{ base: 4, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
       {/* Header */}
@@ -155,7 +202,7 @@ export default function Dashboard() {
             color="white"
             _hover={{ bg: "var(--color-expresso)" }}
             size="sm"
-            onClick={() => setShowCreate(true)}
+            onClick={() => setViewMode("create")}
             w={{ base: "100%", sm: "auto" }}
           >
             Nueva Orden
@@ -187,7 +234,7 @@ export default function Dashboard() {
             color="white"
             _hover={{ bg: "var(--color-expresso)" }}
             size="sm"
-            onClick={() => setShowCreate(true)}
+            onClick={() => setViewMode("create")}
           >
             Crear primera orden
           </Button>
@@ -198,50 +245,54 @@ export default function Dashboard() {
             <Box
               key={order.id}
               bg="white"
-              p={{ base: 4, md: 6 }}
+              p={{ base: 4, md: 5 }}
               borderRadius="xl"
               shadow="md"
               borderWidth={1}
               borderColor="gray.100"
               transition="all 0.2s"
               _hover={{ shadow: "lg", transform: "translateY(-2px)" }}
+              cursor="pointer"
+              onClick={() => {
+                setSelectedOrder(order);
+                setViewMode("detail");
+              }}
             >
               <Flex justify="space-between" align="start" mb={3}>
                 <VStack align="start" spacing={1}>
                   <Text
                     fontWeight="bold"
-                    fontSize={{ base: "lg", md: "xl" }}
+                    fontSize={{ base: "md", md: "lg" }}
                     color="var(--color-expresso)"
                   >
                     {order.clientName}
                   </Text>
-                  <HStack color="gray.500" fontSize="sm">
+                  <HStack color="gray.500" fontSize="xs">
                     <Icon as={MapPin} boxSize={3} />
-                    <Text isTruncated maxW={{ base: "150px", md: "200px" }}>
+                    <Text isTruncated maxW={{ base: "140px", md: "180px" }}>
                       {order.deliveryAddress}
                     </Text>
                   </HStack>
                 </VStack>
-                <Badge
-                  colorScheme={getStatusColor(order.status)}
-                  fontSize="xs"
-                  px={2}
-                  py={1}
-                  borderRadius="md"
-                >
-                  {order.status}
-                </Badge>
+                <Flex align="center" gap={2}>
+                  <Badge
+                    colorScheme={getStatusColor(order.status)}
+                    fontSize="xs"
+                    px={2}
+                    py={1}
+                    borderRadius="md"
+                  >
+                    {order.status}
+                  </Badge>
+                  <ChevronRight size={16} color="gray" />
+                </Flex>
               </Flex>
 
               <Divider my={2} />
 
               <SimpleGrid columns={2} spacing={2} mb={3}>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                  >
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
                     Producto
                   </Text>
                   <Text fontWeight="medium" fontSize="sm">
@@ -249,11 +300,7 @@ export default function Dashboard() {
                   </Text>
                 </Box>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                  >
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
                     Total
                   </Text>
                   <Text fontWeight="bold" color="var(--color-coffee-fruit)">
@@ -261,61 +308,45 @@ export default function Dashboard() {
                   </Text>
                 </Box>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                  >
-                    Fecha Pedido
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                    Pedido
                   </Text>
                   <HStack spacing={1}>
                     <Icon as={Calendar} boxSize={3} />
-                    <Text fontSize="sm">{formatDate(order.createdAt)}</Text>
+                    <Text fontSize="xs">{formatDate(order.createdAt)}</Text>
                   </HStack>
                 </Box>
                 <Box>
-                  <Text
-                    fontSize="xs"
-                    color="gray.500"
-                    textTransform="uppercase"
-                  >
+                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
                     Pago
                   </Text>
                   <Text
                     fontSize="sm"
                     color={order.paid ? "green.600" : "red.500"}
                   >
-                    {order.paid ? "Pagado" : "Por Pagar"}
+                    {order.paid ? "✓ Pagado" : "Pendiente"}
                   </Text>
                 </Box>
               </SimpleGrid>
 
-              {order.notes && (
-                <Box bg="gray.50" p={2} borderRadius="md" mb={3}>
-                  <Text fontSize="xs" color="gray.500" mb={1}>
-                    NOTAS:
-                  </Text>
-                  <Text fontSize="sm" fontStyle="italic">
-                    {order.notes}
-                  </Text>
-                </Box>
-              )}
-
+              {/* Action buttons — stop propagation so card click doesn't fire */}
               <Flex
-                gap={2}
+                gap={{ base: 2, md: 2 }}
                 mt="auto"
                 pt={2}
                 direction={{ base: "column", sm: "row" }}
+                onClick={(e) => e.stopPropagation()}
               >
                 <Button
                   flex={1}
-                  leftIcon={<MessageCircle size={16} />}
+                  leftIcon={<MessageCircle size={14} />}
                   colorScheme="whatsapp"
                   variant="outline"
                   size="sm"
                   onClick={() =>
                     openWhatsApp(order.clientPhone, order.clientName)
                   }
+                  iconSpacing={3}
                 >
                   WhatsApp
                 </Button>
@@ -323,12 +354,13 @@ export default function Dashboard() {
                 {order.status === "Pendiente" && (
                   <Button
                     flex={1}
-                    leftIcon={<Coffee size={16} />}
+                    leftIcon={<Coffee size={14} />}
                     bg="var(--color-warm-roast)"
                     color="white"
                     _hover={{ bg: "var(--color-expresso)" }}
                     size="sm"
                     onClick={() => handleStatusChange(order.id!, "Tostado")}
+                    iconSpacing={3}
                   >
                     Tostar
                   </Button>
@@ -337,10 +369,11 @@ export default function Dashboard() {
                 {order.status === "Tostado" && (
                   <Button
                     flex={1}
-                    leftIcon={<Truck size={16} />}
+                    leftIcon={<Truck size={14} />}
                     colorScheme="blue"
                     size="sm"
                     onClick={() => handleStatusChange(order.id!, "Entregado")}
+                    iconSpacing={3}
                   >
                     Entregar
                   </Button>
@@ -349,11 +382,12 @@ export default function Dashboard() {
                 {order.status === "Entregado" && (
                   <Button
                     flex={1}
-                    leftIcon={<CheckCircle size={16} />}
+                    leftIcon={<CheckCircle size={14} />}
                     colorScheme="green"
                     variant="ghost"
                     size="sm"
                     isDisabled
+                    iconSpacing={3}
                   >
                     Completado
                   </Button>

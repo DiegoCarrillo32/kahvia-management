@@ -15,8 +15,8 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
-import { createOrder } from "../services/orderService";
-import { CoffeeStyle, CoffeeAmount } from "../types/order";
+import { createOrder, updateOrder } from "../services/orderService";
+import { Order, CoffeeStyle, CoffeeAmount } from "../types/order";
 
 const COFFEE_STYLES: CoffeeStyle[] = [
   "Grano Entero",
@@ -30,21 +30,23 @@ const COFFEE_AMOUNTS: CoffeeAmount[] = ["250g", "500g", "1kg"];
 interface CreateOrderProps {
   onClose: () => void;
   onCreated: () => void;
+  editOrder?: Order;
 }
 
-export default function CreateOrder({ onClose, onCreated }: CreateOrderProps) {
+export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrderProps) {
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
+  const isEditing = !!editOrder;
 
   const [form, setForm] = useState({
-    clientName: "",
-    clientPhone: "",
-    deliveryAddress: "",
-    orderPrice: 0,
-    coffeeStyle: "Grano Entero" as CoffeeStyle,
-    amount: "250g" as CoffeeAmount,
-    notes: "",
-    paid: false,
+    clientName: editOrder?.clientName || "",
+    clientPhone: editOrder?.clientPhone || "",
+    deliveryAddress: editOrder?.deliveryAddress || "",
+    orderPrice: editOrder?.orderPrice || 0,
+    coffeeStyle: (editOrder?.coffeeStyle || "Grano Entero") as CoffeeStyle,
+    amount: (editOrder?.amount || "250g") as CoffeeAmount,
+    notes: editOrder?.notes || "",
+    paid: editOrder?.paid || false,
   });
 
   const update = (field: string, value: string | number | boolean) =>
@@ -64,11 +66,16 @@ export default function CreateOrder({ onClose, onCreated }: CreateOrderProps) {
 
     setSubmitting(true);
     try {
-      await createOrder(form);
-      toast({ title: "Orden creada exitosamente", status: "success" });
+      if (isEditing && editOrder?.id) {
+        await updateOrder(editOrder.id, form);
+        toast({ title: "Orden actualizada", status: "success" });
+      } else {
+        await createOrder(form);
+        toast({ title: "Orden creada exitosamente", status: "success" });
+      }
       onCreated();
     } catch {
-      toast({ title: "Error al crear la orden", status: "error" });
+      toast({ title: isEditing ? "Error al actualizar" : "Error al crear la orden", status: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -90,7 +97,7 @@ export default function CreateOrder({ onClose, onCreated }: CreateOrderProps) {
           color="var(--color-expresso)"
           fontFamily="heading"
         >
-          Nueva Orden
+          {isEditing ? "Editar Orden" : "Nueva Orden"}
         </Heading>
       </Flex>
 
@@ -223,7 +230,7 @@ export default function CreateOrder({ onClose, onCreated }: CreateOrderProps) {
             fontFamily="heading"
             flex={1}
           >
-            Crear Orden
+            {isEditing ? "Guardar Cambios" : "Crear Orden"}
           </Button>
           <Button variant="outline" onClick={onClose} flex={1}>
             Cancelar

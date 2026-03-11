@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, updateDoc, addDoc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order, OrderStatus } from '../types/order';
 
@@ -15,16 +15,14 @@ export const createOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'roast
 
 export const getOrders = async (statusFilter?: OrderStatus): Promise<Order[]> => {
   const ordersRef = collection(db, COLLECTION_NAME);
-  
-  let q;
-  if (statusFilter) {
-    q = query(ordersRef, where('status', '==', statusFilter), orderBy('createdAt', 'desc'));
-  } else {
-    q = query(ordersRef, orderBy('createdAt', 'desc'));
-  }
-
+  const q = query(ordersRef, orderBy('createdAt', 'desc'));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+  const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+
+  if (statusFilter) {
+    return all.filter(order => order.status === statusFilter);
+  }
+  return all;
 };
 
 export const markOrderAsRoasted = async (orderId: string) => {
@@ -41,4 +39,14 @@ export const markOrderAsDelivered = async (orderId: string) => {
     status: 'Entregado',
     deliveredAt: serverTimestamp()
   });
+};
+
+export const updateOrder = async (orderId: string, data: Partial<Omit<Order, 'id' | 'createdAt'>>) => {
+  const orderRef = doc(db, COLLECTION_NAME, orderId);
+  await updateDoc(orderRef, data);
+};
+
+export const deleteOrder = async (orderId: string) => {
+  const orderRef = doc(db, COLLECTION_NAME, orderId);
+  await deleteDoc(orderRef);
 };
