@@ -4,5 +4,6 @@ export interface CoffeeBean {
   origin: string;
   roastProfile: string;
   amountGrams: number;
+  costPerKg?: number;
   updatedAt?: unknown;
 }

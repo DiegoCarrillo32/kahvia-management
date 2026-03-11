@@ -12,7 +12,7 @@ import {
   VStack,
   Divider,
 } from "@chakra-ui/react";
-import { Plus, Package, Edit2, Trash2, Save, X } from "lucide-react";
+import { Plus, Package, Edit2, Trash2, Save, X, DollarSign } from "lucide-react";
 import {
   getInventory,
   addCoffeeBean,
@@ -32,6 +32,7 @@ export default function Inventory() {
     origin: "",
     roastProfile: "",
     amountGrams: 0,
+    costPerKg: 0,
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export default function Inventory() {
       await addCoffeeBean(newBean);
       toast({ title: "Café agregado", status: "success" });
       setIsAdding(false);
-      setNewBean({ name: "", origin: "", roastProfile: "", amountGrams: 0 });
+      setNewBean({ name: "", origin: "", roastProfile: "", amountGrams: 0, costPerKg: 0 });
       fetchData();
     } catch {
       toast({ title: "Error al agregar", status: "error" });
@@ -124,7 +125,7 @@ export default function Inventory() {
           <Heading size="md" mb={4} color="var(--color-expresso)">
             Nuevo Grano de Café
           </Heading>
-          <SimpleGrid columns={{ base: 1, md: 4 }} spacing={4} mb={4}>
+          <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
             <Box>
               <Text fontSize="sm" color="gray.600" mb={1}>
                 Nombre / Variedad
@@ -173,6 +174,22 @@ export default function Inventory() {
                   setNewBean({
                     ...newBean,
                     amountGrams: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </Box>
+            <Box>
+              <Text fontSize="sm" color="gray.600" mb={1}>
+                Costo por Kg (₡)
+              </Text>
+              <Input
+                type="number"
+                placeholder="0"
+                value={newBean.costPerKg || ""}
+                onChange={(e) =>
+                  setNewBean({
+                    ...newBean,
+                    costPerKg: parseInt(e.target.value) || 0,
                   })
                 }
               />
@@ -230,6 +247,14 @@ export default function Inventory() {
                   <Text fontSize="sm" color="gray.500">
                     {bean.origin} • {bean.roastProfile}
                   </Text>
+                  {bean.costPerKg != null && bean.costPerKg > 0 && (
+                    <HStack spacing={1} mt={1}>
+                      <DollarSign size={12} color="var(--color-coffee-fruit)" />
+                      <Text fontSize="xs" color="var(--color-coffee-fruit)" fontWeight="medium">
+                        ₡{bean.costPerKg.toLocaleString()}/kg
+                      </Text>
+                    </HStack>
+                  )}
                 </VStack>
                 <Button
                   size="xs"

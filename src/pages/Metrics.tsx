@@ -63,7 +63,7 @@ export default function Metrics() {
       <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={6} mb={8}>
         <MetricCard 
           title="Ingresos Totales" 
-          val={`$${metrics.totalRevenue.toLocaleString()}`} 
+          val={`₡${metrics.totalRevenue.toLocaleString()}`} 
           icon={DollarSign} 
         />
         <MetricCard 

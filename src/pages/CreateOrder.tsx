@@ -178,7 +178,7 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
 
           <FormControl>
             <FormLabel fontSize="sm" color="gray.600">
-              Precio ($)
+              Precio (₡)
             </FormLabel>
             <Input
               type="number"

@@ -317,7 +317,7 @@ export default function Dashboard() {
                     Total
                   </Text>
                   <Text fontWeight="bold" color="var(--color-coffee-fruit)">
-                    ${order.orderPrice}
+                    ₡{order.orderPrice.toLocaleString()}
                   </Text>
                 </Box>
                 <Box>

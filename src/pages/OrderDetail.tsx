@@ -23,7 +23,6 @@ import {
   MessageCircle,
   Pencil,
   Trash2,
-  DollarSign,
 } from "lucide-react";
 import { Order, OrderStatus } from "../types/order";
 import {
@@ -234,13 +233,8 @@ export default function OrderDetail({
               Precio
             </Text>
             <HStack>
-              <DollarSign size={16} color="var(--color-coffee-fruit)" />
-              <Text
-                fontWeight="bold"
-                fontSize="lg"
-                color="var(--color-coffee-fruit)"
-              >
-                {order.orderPrice}
+              <Text fontWeight="bold" fontSize="lg" color="var(--color-coffee-fruit)">
+                ₡{order.orderPrice.toLocaleString()}
               </Text>
             </HStack>
           </Box>
