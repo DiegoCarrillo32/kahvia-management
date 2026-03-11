@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-expresso: #410505;
+  --color-warm-roast: #7a1318;
+  --color-coffee-fruit: #b92323;
+  --color-white-pergamino: #fff5e1;
+
+  --font-sans: "Gotham", sans-serif;
+  --font-heading: "Titan One", sans-serif;
+}
+
+@font-face {
+  font-family: 'Titan One';
+  src: url('/assets/fonts/Titan_One/TitanOne-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Gotham';
+  src: url('/assets/fonts/Gotham-Font/GothamBook.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Gotham';
+  src: url('/assets/fonts/Gotham-Font/GothamBold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+body {
+  font-family: "Gotham", sans-serif;
+  background-color: var(--color-white-pergamino);
+  color: var(--color-expresso);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Titan One", sans-serif;
+}
