@@ -82,7 +82,7 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
   };
 
   return (
-    <Box p={{ base: 4, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
+    <Box p={{ base: 4, md: 8 }} pb={{ base: 24, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
       <Flex align="center" gap={3} mb={6}>
         <IconButton
           aria-label="Volver"

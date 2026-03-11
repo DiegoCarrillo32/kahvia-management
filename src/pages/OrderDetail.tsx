@@ -68,9 +68,7 @@ export default function OrderDetail({
       : new Date(timestamp as string | number | Date).toLocaleString();
   };
 
-  const handleStatusChange = async (
-    newStatus: "Tostado" | "Entregado"
-  ) => {
+  const handleStatusChange = async (newStatus: "Tostado" | "Entregado") => {
     try {
       if (newStatus === "Tostado") await markOrderAsRoasted(order.id!);
       if (newStatus === "Entregado") await markOrderAsDelivered(order.id!);
@@ -85,7 +83,12 @@ export default function OrderDetail({
   };
 
   const handleDelete = async () => {
-    if (!confirm("¿Estás seguro de que deseas eliminar esta orden? Esta acción no se puede deshacer.")) return;
+    if (
+      !confirm(
+        "¿Estás seguro de que deseas eliminar esta orden? Esta acción no se puede deshacer.",
+      )
+    )
+      return;
     try {
       await deleteOrder(order.id!);
       toast({ title: "Orden eliminada", status: "info" });
@@ -100,20 +103,19 @@ export default function OrderDetail({
     const message = `Hola ${order.clientName}, te escribimos de Kahvia. `;
     window.open(
       `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`,
-      "_blank"
+      "_blank",
     );
   };
 
   return (
-    <Box p={{ base: 4, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
+    <Box
+      p={{ base: 4, md: 8 }}
+      pb={{ base: 24, md: 8 }}
+      bg="var(--color-white-pergamino)"
+      minH="100vh"
+    >
       {/* Header */}
-      <Flex
-        align="center"
-        justify="space-between"
-        mb={6}
-        wrap="wrap"
-        gap={3}
-      >
+      <Flex align="center" justify="space-between" mb={6} wrap="wrap" gap={3}>
         <Flex align="center" gap={3}>
           <IconButton
             aria-label="Volver"
@@ -197,7 +199,12 @@ export default function OrderDetail({
         {/* Order Details */}
         <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={5} mb={6}>
           <Box>
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+            <Text
+              fontSize="xs"
+              color="gray.500"
+              textTransform="uppercase"
+              mb={1}
+            >
               Estilo de Café
             </Text>
             <Text fontWeight="medium" fontSize="lg">
@@ -205,7 +212,12 @@ export default function OrderDetail({
             </Text>
           </Box>
           <Box>
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+            <Text
+              fontSize="xs"
+              color="gray.500"
+              textTransform="uppercase"
+              mb={1}
+            >
               Cantidad
             </Text>
             <Text fontWeight="medium" fontSize="lg">
@@ -213,18 +225,32 @@ export default function OrderDetail({
             </Text>
           </Box>
           <Box>
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+            <Text
+              fontSize="xs"
+              color="gray.500"
+              textTransform="uppercase"
+              mb={1}
+            >
               Precio
             </Text>
             <HStack>
               <DollarSign size={16} color="var(--color-coffee-fruit)" />
-              <Text fontWeight="bold" fontSize="lg" color="var(--color-coffee-fruit)">
+              <Text
+                fontWeight="bold"
+                fontSize="lg"
+                color="var(--color-coffee-fruit)"
+              >
                 {order.orderPrice}
               </Text>
             </HStack>
           </Box>
           <Box>
-            <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={1}>
+            <Text
+              fontSize="xs"
+              color="gray.500"
+              textTransform="uppercase"
+              mb={1}
+            >
               Estado de Pago
             </Text>
             <Badge colorScheme={order.paid ? "green" : "red"} fontSize="sm">
@@ -247,14 +273,26 @@ export default function OrderDetail({
             </Text>
           </HStack>
           <HStack>
-            <Coffee size={16} color={order.roastedAt ? "var(--color-warm-roast)" : "gray"} />
-            <Text fontSize="sm" color={order.roastedAt ? "gray.700" : "gray.400"}>
+            <Coffee
+              size={16}
+              color={order.roastedAt ? "var(--color-warm-roast)" : "gray"}
+            />
+            <Text
+              fontSize="sm"
+              color={order.roastedAt ? "gray.700" : "gray.400"}
+            >
               <strong>Tostado:</strong> {formatDate(order.roastedAt)}
             </Text>
           </HStack>
           <HStack>
-            <Truck size={16} color={order.deliveredAt ? "var(--color-warm-roast)" : "gray"} />
-            <Text fontSize="sm" color={order.deliveredAt ? "gray.700" : "gray.400"}>
+            <Truck
+              size={16}
+              color={order.deliveredAt ? "var(--color-warm-roast)" : "gray"}
+            />
+            <Text
+              fontSize="sm"
+              color={order.deliveredAt ? "gray.700" : "gray.400"}
+            >
               <strong>Entregado:</strong> {formatDate(order.deliveredAt)}
             </Text>
           </HStack>
@@ -265,7 +303,12 @@ export default function OrderDetail({
           <>
             <Divider mb={4} />
             <Box bg="gray.50" p={4} borderRadius="md" mb={6}>
-              <Text fontSize="xs" color="gray.500" textTransform="uppercase" mb={2}>
+              <Text
+                fontSize="xs"
+                color="gray.500"
+                textTransform="uppercase"
+                mb={2}
+              >
                 Notas
               </Text>
               <Text fontStyle="italic">{order.notes}</Text>
@@ -275,17 +318,16 @@ export default function OrderDetail({
 
         {/* Actions */}
         <Divider mb={4} />
-        <Flex
-          gap={3}
-          direction={{ base: "column", sm: "row" }}
-        >
+        <Flex gap={3} direction={{ base: "column", sm: "row" }}>
           <Button
             flex={1}
-            leftIcon={<MessageCircle size={16} />}
+            leftIcon={<MessageCircle size={14} />}
             colorScheme="whatsapp"
+            variant="outline"
+            size="sm"
             onClick={openWhatsApp}
-            px={{ base: 4, md: 6 }}
-            gap={2}
+            padding={2}
+            iconSpacing={3}
           >
             WhatsApp
           </Button>
@@ -293,13 +335,14 @@ export default function OrderDetail({
           {order.status === "Pendiente" && (
             <Button
               flex={1}
-              leftIcon={<Coffee size={16} />}
+              leftIcon={<Coffee size={18} />}
               bg="var(--color-warm-roast)"
               color="white"
               _hover={{ bg: "var(--color-expresso)" }}
               onClick={() => handleStatusChange("Tostado")}
-              px={{ base: 4, md: 6 }}
-              gap={2}
+              size={{ base: "lg", md: "md" }}
+              iconSpacing={3}
+              padding={2}
             >
               Marcar como Tostado
             </Button>
@@ -308,11 +351,12 @@ export default function OrderDetail({
           {order.status === "Tostado" && (
             <Button
               flex={1}
-              leftIcon={<Truck size={16} />}
+              leftIcon={<Truck size={18} />}
               colorScheme="blue"
               onClick={() => handleStatusChange("Entregado")}
-              px={{ base: 4, md: 6 }}
-              gap={2}
+              size={{ base: "lg", md: "md" }}
+              iconSpacing={3}
+              padding={2}
             >
               Marcar como Entregado
             </Button>
@@ -321,12 +365,13 @@ export default function OrderDetail({
           {order.status === "Entregado" && (
             <Button
               flex={1}
-              leftIcon={<CheckCircle size={16} />}
+              leftIcon={<CheckCircle size={18} />}
               colorScheme="green"
               variant="ghost"
               isDisabled
-              px={{ base: 4, md: 6 }}
-              gap={2}
+              size={{ base: "lg", md: "md" }}
+              iconSpacing={3}
+              padding={2}
             >
               Completado
             </Button>

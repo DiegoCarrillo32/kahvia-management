@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   const handleStatusChange = async (
     id: string,
-    newStatus: "Tostado" | "Entregado"
+    newStatus: "Tostado" | "Entregado",
   ) => {
     try {
       if (newStatus === "Tostado") await markOrderAsRoasted(id);
@@ -92,7 +92,7 @@ export default function Dashboard() {
     const message = `Hola ${clientName}, te escribimos de Kahvia. `;
     window.open(
       `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`,
-      "_blank"
+      "_blank",
     );
   };
 
@@ -161,7 +161,12 @@ export default function Dashboard() {
 
   // --- LIST VIEW ---
   return (
-    <Box p={{ base: 4, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
+    <Box
+      p={{ base: 4, md: 8 }}
+      pb={{ base: 24, md: 8 }}
+      bg="var(--color-white-pergamino)"
+      minH="100vh"
+    >
       {/* Header */}
       <Flex
         justify="space-between"
@@ -292,7 +297,11 @@ export default function Dashboard() {
 
               <SimpleGrid columns={2} spacing={2} mb={3}>
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                  >
                     Producto
                   </Text>
                   <Text fontWeight="medium" fontSize="sm">
@@ -300,7 +309,11 @@ export default function Dashboard() {
                   </Text>
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                  >
                     Total
                   </Text>
                   <Text fontWeight="bold" color="var(--color-coffee-fruit)">
@@ -308,7 +321,11 @@ export default function Dashboard() {
                   </Text>
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                  >
                     Pedido
                   </Text>
                   <HStack spacing={1}>
@@ -317,7 +334,11 @@ export default function Dashboard() {
                   </HStack>
                 </Box>
                 <Box>
-                  <Text fontSize="xs" color="gray.500" textTransform="uppercase">
+                  <Text
+                    fontSize="xs"
+                    color="gray.500"
+                    textTransform="uppercase"
+                  >
                     Pago
                   </Text>
                   <Text
@@ -346,6 +367,7 @@ export default function Dashboard() {
                   onClick={() =>
                     openWhatsApp(order.clientPhone, order.clientName)
                   }
+                  padding={2}
                   iconSpacing={3}
                 >
                   WhatsApp
@@ -359,6 +381,7 @@ export default function Dashboard() {
                     color="white"
                     _hover={{ bg: "var(--color-expresso)" }}
                     size="sm"
+                    padding={2}
                     onClick={() => handleStatusChange(order.id!, "Tostado")}
                     iconSpacing={3}
                   >
@@ -372,6 +395,7 @@ export default function Dashboard() {
                     leftIcon={<Truck size={14} />}
                     colorScheme="blue"
                     size="sm"
+                    padding={2}
                     onClick={() => handleStatusChange(order.id!, "Entregado")}
                     iconSpacing={3}
                   >
@@ -387,6 +411,7 @@ export default function Dashboard() {
                     variant="ghost"
                     size="sm"
                     isDisabled
+                    padding={2}
                     iconSpacing={3}
                   >
                     Completado

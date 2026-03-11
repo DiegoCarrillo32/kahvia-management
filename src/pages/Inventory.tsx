@@ -93,9 +93,9 @@ export default function Inventory() {
   };
 
   return (
-    <Box p={8} bg="var(--color-white-pergamino)" minH="100vh">
-      <Flex justify="space-between" align="center" mb={8}>
-        <Heading as="h1" color="var(--color-expresso)" fontFamily="heading">
+    <Box p={{ base: 4, md: 8 }} pb={{ base: 24, md: 8 }} bg="var(--color-white-pergamino)" minH="100vh">
+      <Flex justify="space-between" align="center" mb={6} wrap="wrap" gap={3} direction={{ base: "column", sm: "row" }}>
+        <Heading as="h1" size={{ base: "md", md: "lg" }} color="var(--color-expresso)" fontFamily="heading">
           Inventario de Granos
         </Heading>
         <Button
@@ -104,6 +104,8 @@ export default function Inventory() {
           color="white"
           _hover={{ bg: "var(--color-expresso)" }}
           onClick={() => setIsAdding(!isAdding)}
+          w={{ base: "100%", sm: "auto" }}
+          size={{ base: "md", md: "md" }}
         >
           {isAdding ? "Cancelar" : "Agregar Grano"}
         </Button>
@@ -176,9 +178,14 @@ export default function Inventory() {
               />
             </Box>
           </SimpleGrid>
-          <Button colorScheme="whatsapp" onClick={handleAdd}>
-            Guardar Grano
-          </Button>
+          <Flex gap={3} direction={{ base: "column", sm: "row" }}>
+            <Button colorScheme="whatsapp" onClick={handleAdd} size="lg" w={{ base: "100%", sm: "auto" }}>
+              Guardar Grano
+            </Button>
+            <Button variant="outline" onClick={() => setIsAdding(false)} size="lg" w={{ base: "100%", sm: "auto" }}>
+              Cancelar
+            </Button>
+          </Flex>
         </Box>
       )}
 
@@ -236,7 +243,7 @@ export default function Inventory() {
 
               <Divider my={4} />
 
-              <Flex align="center" justify="space-between">
+              <Flex align="center" justify="space-between" wrap="wrap">
                 <HStack>
                   <Package size={20} color="var(--color-coffee-fruit)" />
                   <Text color="gray.600" fontSize="sm">
@@ -245,9 +252,9 @@ export default function Inventory() {
                 </HStack>
 
                 {editingId === bean.id ? (
-                  <HStack w="150px">
+                  <HStack w={{ base: "100%", sm: "180px" }} mt={{ base: 2, sm: 0 }}>
                     <Input
-                      size="sm"
+                      size="md"
                       type="number"
                       value={editAmount}
                       onChange={(e) =>
@@ -256,20 +263,22 @@ export default function Inventory() {
                       autoFocus
                     />
                     <Button
-                      size="sm"
+                      size="md"
                       colorScheme="blue"
-                      px={2}
+                      px={3}
+                      minW="44px"
                       onClick={() => handleSaveEdit(bean.id!)}
                     >
-                      <Save size={16} />
+                      <Save size={18} />
                     </Button>
                     <Button
-                      size="sm"
+                      size="md"
                       variant="ghost"
-                      px={2}
+                      px={3}
+                      minW="44px"
                       onClick={() => setEditingId(null)}
                     >
-                      <X size={16} />
+                      <X size={18} />
                     </Button>
                   </HStack>
                 ) : (
