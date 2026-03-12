@@ -23,7 +23,10 @@ import {
   MessageCircle,
   Pencil,
   Trash2,
+  Flame,
+  Plus,
 } from "lucide-react";
+import { Roast } from "../types/roast";
 import { Order, OrderStatus } from "../types/order";
 import {
   markOrderAsRoasted,
@@ -36,6 +39,9 @@ interface OrderDetailProps {
   onBack: () => void;
   onEdit: () => void;
   onRefresh: () => void;
+  roasts?: Roast[];
+  onCreateRoast?: () => void;
+  onViewRoast?: (roast: Roast) => void;
 }
 
 export default function OrderDetail({
@@ -43,6 +49,9 @@ export default function OrderDetail({
   onBack,
   onEdit,
   onRefresh,
+  roasts = [],
+  onCreateRoast,
+  onViewRoast,
 }: OrderDetailProps) {
   const toast = useToast();
 
@@ -65,6 +74,24 @@ export default function OrderDetail({
     return ts.toDate
       ? ts.toDate().toLocaleString()
       : new Date(timestamp as string | number | Date).toLocaleString();
+  };
+
+  const formatDateShort = (timestamp: unknown) => {
+    if (!timestamp) return "—";
+    const ts = timestamp as { toDate?: () => Date };
+    if (ts.toDate) return ts.toDate().toLocaleDateString();
+    const d = new Date(timestamp as string | number | Date);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+  };
+
+  const getRoastLevelColor = (level: string) => {
+    switch (level) {
+      case "Claro": return "yellow";
+      case "Medio": return "orange";
+      case "Medio-Oscuro": return "red";
+      case "Oscuro": return "purple";
+      default: return "gray";
+    }
   };
 
   const handleStatusChange = async (newStatus: "Tostado" | "Entregado") => {
@@ -308,6 +335,89 @@ export default function OrderDetail({
               <Text fontStyle="italic">{order.notes}</Text>
             </Box>
           </>
+        )}
+
+        {/* Associated Roasts */}
+        <Divider mb={4} />
+        <Flex justify="space-between" align="center" mb={4}>
+          <Heading size="sm" color="var(--color-expresso)">
+            Tostados Asociados ({roasts.length})
+          </Heading>
+          {onCreateRoast && (
+            <Button
+              leftIcon={<Plus size={14} />}
+              size="xs"
+              bg="var(--color-warm-roast)"
+              color="white"
+              _hover={{ bg: "var(--color-expresso)" }}
+              onClick={onCreateRoast}
+            >
+              Crear Tostado
+            </Button>
+          )}
+        </Flex>
+
+        {roasts.length === 0 ? (
+          <Flex
+            direction="column"
+            align="center"
+            py={6}
+            bg="gray.50"
+            borderRadius="md"
+            mb={6}
+          >
+            <Flame size={28} color="var(--color-warm-roast)" opacity={0.4} />
+            <Text fontSize="sm" color="gray.400" mt={2}>
+              No hay tostados asociados a esta orden
+            </Text>
+          </Flex>
+        ) : (
+          <VStack spacing={3} align="stretch" mb={6}>
+            {roasts.map((roast) => {
+              const isBlend = roast.ingredients.length > 1;
+              const title = isBlend
+                ? `Blend (${roast.ingredients.length} granos)`
+                : roast.ingredients[0]?.beanName || "Tostado";
+              return (
+                <Box
+                  key={roast.id}
+                  bg="orange.50"
+                  p={3}
+                  borderRadius="md"
+                  borderWidth={1}
+                  borderColor="orange.200"
+                  cursor={onViewRoast ? "pointer" : "default"}
+                  transition="all 0.2s"
+                  _hover={onViewRoast ? { shadow: "md", borderColor: "orange.400" } : {}}
+                  onClick={() => onViewRoast?.(roast)}
+                >
+                  <Flex justify="space-between" align="center" mb={1}>
+                    <HStack>
+                      <Flame size={14} color="var(--color-warm-roast)" />
+                      <Text fontWeight="medium" fontSize="sm">
+                        {title}
+                      </Text>
+                    </HStack>
+                    <Badge
+                      colorScheme={getRoastLevelColor(roast.roastLevel)}
+                      fontSize="xs"
+                    >
+                      {roast.roastLevel}
+                    </Badge>
+                  </Flex>
+                  <HStack fontSize="xs" color="gray.500" spacing={3}>
+                    <Text>{formatDateShort(roast.roastedAt)}</Text>
+                    <Text>
+                      {roast.inputWeightGrams}g → {roast.outputWeightGrams}g
+                    </Text>
+                    <Text color={roast.lossPercentage > 20 ? "red.500" : "gray.500"}>
+                      Pérdida: {roast.lossPercentage}%
+                    </Text>
+                  </HStack>
+                </Box>
+              );
+            })}
+          </VStack>
         )}
 
         {/* Actions */}

@@ -34,13 +34,16 @@ export const createRoast = async (
 
   const batch = writeBatch(db);
 
-  // Create roast document
+  // Create roast document — filter undefined values (Firestore rejects them)
   const roastRef = doc(collection(db, COLLECTION_NAME));
-  batch.set(roastRef, {
-    ...roast,
-    lossPercentage,
-    createdAt: serverTimestamp(),
-  });
+  const roastData = Object.fromEntries(
+    Object.entries({
+      ...roast,
+      lossPercentage,
+      createdAt: serverTimestamp(),
+    }).filter(([, v]) => v !== undefined)
+  );
+  batch.set(roastRef, roastData);
 
   // Deduct each ingredient from inventory
   for (const ingredient of roast.ingredients) {
@@ -68,6 +71,11 @@ export const getRoastsByBean = async (beanId: string): Promise<Roast[]> => {
   return all.filter((roast) =>
     roast.ingredients.some((ing) => ing.beanId === beanId)
   );
+};
+
+export const getRoastsByOrder = async (orderId: string): Promise<Roast[]> => {
+  const all = await getRoasts();
+  return all.filter((roast) => roast.orderId === orderId);
 };
 
 export const deleteRoast = async (roastId: string) => {

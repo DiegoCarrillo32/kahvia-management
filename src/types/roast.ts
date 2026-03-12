@@ -8,6 +8,8 @@ export interface RoastIngredient {
 
 export interface Roast {
   id?: string;
+  orderId?: string;
+  orderClientName?: string;
   ingredients: RoastIngredient[];
   inputWeightGrams: number;
   outputWeightGrams: number;

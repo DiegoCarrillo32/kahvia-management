@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getDocs, writeBatch } from 'firebase/firestore';
-import { createRoast, getRoasts, getRoastsByBean } from '../services/roastService';
+import { createRoast, getRoasts, getRoastsByBean, getRoastsByOrder } from '../services/roastService';
 
 vi.mock('firebase/app', () => ({
   initializeApp: vi.fn(() => ({})),
@@ -96,6 +96,24 @@ describe('roastService', () => {
       // Should update both beans
       expect(mockBatchUpdate).toHaveBeenCalledTimes(2);
     });
+
+    it('should pass orderId and orderClientName when provided', async () => {
+      await createRoast({
+        ingredients: [
+          { beanId: 'bean-1', beanName: 'Caturra', gramsUsed: 1000 },
+        ],
+        inputWeightGrams: 1000,
+        outputWeightGrams: 850,
+        roastLevel: 'Medio',
+        roastedAt: new Date(),
+        orderId: 'order-1',
+        orderClientName: 'Juan',
+      });
+
+      const setCall = mockBatchSet.mock.calls[0];
+      expect(setCall[1].orderId).toBe('order-1');
+      expect(setCall[1].orderClientName).toBe('Juan');
+    });
   });
 
   describe('getRoasts', () => {
@@ -161,6 +179,87 @@ describe('roastService', () => {
       const beanRoasts = await getRoastsByBean('bean-1');
       expect(beanRoasts).toHaveLength(1);
       expect(beanRoasts[0].id).toBe('roast-1');
+    });
+  });
+
+  describe('getRoastsByOrder', () => {
+    it('should filter roasts by orderId', async () => {
+      const mockDocs = [
+        {
+          id: 'roast-1',
+          data: () => ({
+            ingredients: [
+              { beanId: 'bean-1', beanName: 'Caturra', gramsUsed: 1000 },
+            ],
+            inputWeightGrams: 1000,
+            outputWeightGrams: 850,
+            lossPercentage: 15,
+            roastLevel: 'Medio',
+            roastedAt: new Date(),
+            orderId: 'order-1',
+            orderClientName: 'Juan',
+          }),
+        },
+        {
+          id: 'roast-2',
+          data: () => ({
+            ingredients: [
+              { beanId: 'bean-2', beanName: 'Bourbon', gramsUsed: 500 },
+            ],
+            inputWeightGrams: 500,
+            outputWeightGrams: 420,
+            lossPercentage: 16,
+            roastLevel: 'Claro',
+            roastedAt: new Date(),
+            orderId: 'order-2',
+            orderClientName: 'Maria',
+          }),
+        },
+        {
+          id: 'roast-3',
+          data: () => ({
+            ingredients: [
+              { beanId: 'bean-1', beanName: 'Caturra', gramsUsed: 800 },
+            ],
+            inputWeightGrams: 800,
+            outputWeightGrams: 680,
+            lossPercentage: 15,
+            roastLevel: 'Medio-Oscuro',
+            roastedAt: new Date(),
+          }),
+        },
+      ];
+
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: mockDocs } as never);
+
+      const orderRoasts = await getRoastsByOrder('order-1');
+      expect(orderRoasts).toHaveLength(1);
+      expect(orderRoasts[0].id).toBe('roast-1');
+      expect(orderRoasts[0].orderId).toBe('order-1');
+    });
+
+    it('should return empty array when no roasts match the order', async () => {
+      const mockDocs = [
+        {
+          id: 'roast-1',
+          data: () => ({
+            ingredients: [
+              { beanId: 'bean-1', beanName: 'Caturra', gramsUsed: 1000 },
+            ],
+            inputWeightGrams: 1000,
+            outputWeightGrams: 850,
+            lossPercentage: 15,
+            roastLevel: 'Medio',
+            roastedAt: new Date(),
+            orderId: 'order-2',
+          }),
+        },
+      ];
+
+      vi.mocked(getDocs).mockResolvedValueOnce({ docs: mockDocs } as never);
+
+      const orderRoasts = await getRoastsByOrder('order-999');
+      expect(orderRoasts).toHaveLength(0);
     });
   });
 });

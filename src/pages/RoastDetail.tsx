@@ -20,6 +20,7 @@ import {
   Clock,
   User,
   TrendingDown,
+  ChevronRight,
 } from "lucide-react";
 import { Roast } from "../types/roast";
 import { deleteRoast } from "../services/roastService";
@@ -27,9 +28,10 @@ import { deleteRoast } from "../services/roastService";
 interface RoastDetailProps {
   roast: Roast;
   onBack: () => void;
+  onViewOrder?: (orderId: string) => void;
 }
 
-export default function RoastDetail({ roast, onBack }: RoastDetailProps) {
+export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailProps) {
   const toast = useToast();
 
   const formatDate = (timestamp: unknown) => {
@@ -300,6 +302,37 @@ export default function RoastDetail({ roast, onBack }: RoastDetailProps) {
                 Notas
               </Text>
               <Text fontStyle="italic">{roast.notes}</Text>
+            </Box>
+          </>
+        )}
+
+        {/* Associated Order */}
+        {roast.orderClientName && (
+          <>
+            <Divider mb={4} />
+            <Heading size="sm" mb={3} color="var(--color-expresso)">
+              Orden Asociada
+            </Heading>
+            <Box
+              bg="blue.50"
+              p={4}
+              borderRadius="md"
+              mb={6}
+              borderWidth={1}
+              borderColor="blue.200"
+              cursor={onViewOrder && roast.orderId ? "pointer" : "default"}
+              transition="all 0.2s"
+              _hover={onViewOrder && roast.orderId ? { shadow: "md", borderColor: "blue.400" } : {}}
+              onClick={() => roast.orderId && onViewOrder?.(roast.orderId)}
+            >
+              <Flex justify="space-between" align="center">
+                <Text fontWeight="medium" color="var(--color-expresso)">
+                  {roast.orderClientName}
+                </Text>
+                {onViewOrder && roast.orderId && (
+                  <ChevronRight size={16} color="gray" />
+                )}
+              </Flex>
             </Box>
           </>
         )}

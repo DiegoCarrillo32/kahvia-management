@@ -20,8 +20,10 @@ import {
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { createRoast } from "../services/roastService";
 import { getInventory } from "../services/inventoryService";
+import { getOrders } from "../services/orderService";
 import { CoffeeBean } from "../types/inventory";
 import { RoastLevel, RoastIngredient } from "../types/roast";
+import { Order } from "../types/order";
 
 const ROAST_LEVELS: RoastLevel[] = [
   "Claro",
@@ -34,16 +36,20 @@ interface RoastFormProps {
   onClose: () => void;
   onCreated: () => void;
   preSelectedBeanId?: string;
+  preSelectedOrderId?: string;
 }
 
 export default function RoastForm({
   onClose,
   onCreated,
   preSelectedBeanId,
+  preSelectedOrderId,
 }: RoastFormProps) {
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [beans, setBeans] = useState<CoffeeBean[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(preSelectedOrderId || "");
 
   const [ingredients, setIngredients] = useState<RoastIngredient[]>([]);
   const [selectedBeanId, setSelectedBeanId] = useState("");
@@ -65,9 +71,19 @@ export default function RoastForm({
     }
   }, [toast]);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      const data = await getOrders();
+      setOrders(data);
+    } catch {
+      toast({ title: "Error cargando órdenes", status: "error" });
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchBeans();
-  }, [fetchBeans]);
+    fetchOrders();
+  }, [fetchBeans, fetchOrders]);
 
   // Pre-select bean if provided
   useEffect(() => {
@@ -148,6 +164,7 @@ export default function RoastForm({
 
     setSubmitting(true);
     try {
+      const selectedOrder = orders.find((o) => o.id === selectedOrderId);
       await createRoast({
         ingredients,
         inputWeightGrams: inputWeight,
@@ -158,6 +175,8 @@ export default function RoastForm({
         roasterName: roasterName || undefined,
         notes: notes || undefined,
         roastedAt: new Date(),
+        orderId: selectedOrderId || undefined,
+        orderClientName: selectedOrder?.clientName || undefined,
       });
       toast({ title: "Tostado registrado", status: "success" });
       onCreated();
@@ -202,6 +221,26 @@ export default function RoastForm({
         shadow="md"
         maxW="800px"
       >
+        {/* Order Selector */}
+        <Heading size="sm" mb={3} color="var(--color-expresso)">
+          Orden Asociada
+        </Heading>
+        <FormControl mb={4}>
+          <Select
+            placeholder="Sin orden asociada"
+            value={selectedOrderId}
+            onChange={(e) => setSelectedOrderId(e.target.value)}
+          >
+            {orders.map((order) => (
+              <option key={order.id} value={order.id}>
+                {order.clientName} — {order.coffeeStyle} {order.amount}
+              </option>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Divider my={4} />
+
         {/* Bean Selector */}
         <Heading size="sm" mb={3} color="var(--color-expresso)">
           Granos a Tostar

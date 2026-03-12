@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -31,6 +32,7 @@ export default function Roasts() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedRoast, setSelectedRoast] = useState<Roast | null>(null);
   const toast = useToast();
+  const navigate = useNavigate();
 
   const fetchRoasts = useCallback(async () => {
     setLoading(true);
@@ -93,6 +95,9 @@ export default function Roasts() {
           setSelectedRoast(null);
           setViewMode("list");
           fetchRoasts();
+        }}
+        onViewOrder={(orderId) => {
+          navigate('/', { state: { orderId } });
         }}
       />
     );
@@ -201,6 +206,11 @@ export default function Roasts() {
                       <Calendar size={12} />
                       <Text>{formatDate(roast.roastedAt)}</Text>
                     </HStack>
+                    {roast.orderClientName && (
+                      <Text fontSize="xs" color="var(--color-warm-roast)" mt={1}>
+                        Orden: {roast.orderClientName}
+                      </Text>
+                    )}
                   </Box>
                   <Flex align="center" gap={2}>
                     <Badge

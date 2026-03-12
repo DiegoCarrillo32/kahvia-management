@@ -74,10 +74,28 @@ describe('Type Definitions', () => {
         roasterName: 'Diego',
         notes: 'Great blend',
         roastedAt: new Date(),
+        orderId: 'order-1',
+        orderClientName: 'Juan',
       };
 
       expect(roast.ingredients).toHaveLength(2);
       expect(roast.roasterName).toBe('Diego');
+      expect(roast.orderId).toBe('order-1');
+      expect(roast.orderClientName).toBe('Juan');
+    });
+
+    it('should allow roast without order association', () => {
+      const roast: Roast = {
+        ingredients: [{ beanId: 'b1', beanName: 'Caturra', gramsUsed: 500 }],
+        inputWeightGrams: 500,
+        outputWeightGrams: 420,
+        lossPercentage: 16,
+        roastLevel: 'Claro',
+        roastedAt: new Date(),
+      };
+
+      expect(roast.orderId).toBeUndefined();
+      expect(roast.orderClientName).toBeUndefined();
     });
   });
 

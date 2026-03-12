@@ -20,7 +20,7 @@ export default defineConfig({
     tailwindcss() as any,
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["assets/images/LOGO-06.svg", "assets/fonts/**/*"],
+      includeAssets: ["assets/images/LOGO-19.svg", "assets/fonts/**/*"],
       manifest: {
         name: "Kahvia Management",
         short_name: "Kahvia",
