@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Flex,
@@ -7,13 +7,12 @@ import {
   Button,
   SimpleGrid,
   HStack,
-  useToast,
   VStack,
   Divider,
   Badge,
 } from "@chakra-ui/react";
 import { Plus, Package, ChevronRight } from "lucide-react";
-import { getInventory } from "../services/inventoryService";
+import { useInventory } from "../hooks/useInventory";
 import { CoffeeBean } from "../types/inventory";
 import BeanDetail from "./BeanDetail";
 import BeanForm from "./BeanForm";
@@ -22,37 +21,23 @@ import RoastForm from "./RoastForm";
 type ViewMode = "list" | "create" | "detail" | "edit" | "roast";
 
 export default function Inventory() {
-  const [beans, setBeans] = useState<CoffeeBean[]>([]);
-  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedBean, setSelectedBean] = useState<CoffeeBean | null>(null);
-  const toast = useToast();
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getInventory();
-      setBeans(data);
-      // Refresh selected bean data if viewing detail
-      if (selectedBean) {
-        const updated = data.find((b) => b.id === selectedBean.id);
-        if (updated) setSelectedBean(updated);
-        else {
-          setSelectedBean(null);
-          setViewMode("list");
-        }
-      }
-    } catch {
-      toast({ title: "Error cargando inventario", status: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast, selectedBean]);
+  const { data: beans = [], isLoading: loading } = useInventory();
 
+  // Refresh selected bean data if viewing detail
   useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (selectedBean) {
+      const updated = beans.find((b) => b.id === selectedBean.id);
+      if (updated) {
+        setSelectedBean(updated);
+      } else if (viewMode === "detail" || viewMode === "edit") {
+        setSelectedBean(null);
+        setViewMode("list");
+      }
+    }
+  }, [beans, selectedBean, viewMode]);
 
   // --- VIEW MODES ---
 
@@ -60,10 +45,7 @@ export default function Inventory() {
     return (
       <BeanForm
         onClose={() => setViewMode("list")}
-        onSaved={() => {
-          setViewMode("list");
-          fetchData();
-        }}
+        onSaved={() => setViewMode("list")}
       />
     );
   }
@@ -73,10 +55,7 @@ export default function Inventory() {
       <BeanForm
         editBean={selectedBean}
         onClose={() => setViewMode("detail")}
-        onSaved={() => {
-          setViewMode("list");
-          fetchData();
-        }}
+        onSaved={() => setViewMode("list")}
       />
     );
   }
@@ -86,10 +65,7 @@ export default function Inventory() {
       <RoastForm
         preSelectedBeanId={selectedBean.id}
         onClose={() => setViewMode("detail")}
-        onCreated={() => {
-          setViewMode("detail");
-          fetchData();
-        }}
+        onCreated={() => setViewMode("detail")}
       />
     );
   }
@@ -101,10 +77,9 @@ export default function Inventory() {
         onBack={() => {
           setSelectedBean(null);
           setViewMode("list");
-          fetchData();
         }}
         onEdit={() => setViewMode("edit")}
-        onRefresh={fetchData}
+        onRefresh={() => {}}
         onRoast={() => setViewMode("roast")}
       />
     );

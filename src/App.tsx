@@ -265,56 +265,63 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { queryClient } from "./lib/react-query";
+
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/inventory"
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Inventory />
-                </Layout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/roasts"
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Roasts />
-                </Layout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/metrics"
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Metrics />
-                </Layout>
-              </PrivateRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/inventory"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Inventory />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/roasts"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Roasts />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/metrics"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Metrics />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }
 

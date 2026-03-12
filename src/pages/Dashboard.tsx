@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -26,11 +26,11 @@ import {
   ChevronRight,
 } from "lucide-react";
 import {
-  getOrders,
-  markOrderAsRoasted,
-  markOrderAsDelivered,
-} from "../services/orderService";
-import { getRoastsByOrder } from "../services/roastService";
+  useOrders,
+  useMarkOrderAsRoasted,
+  useMarkOrderAsDelivered,
+} from "../hooks/useOrders";
+import { useRoastsByOrder } from "../hooks/useRoasts";
 import { Order, OrderStatus } from "../types/order";
 import { Roast } from "../types/roast";
 import CreateOrder from "./CreateOrder";
@@ -41,90 +41,61 @@ import RoastDetail from "./RoastDetail";
 type ViewMode = "list" | "create" | "detail" | "edit" | "roast" | "roastDetail";
 
 export default function Dashboard() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [orderRoasts, setOrderRoasts] = useState<Roast[]>([]);
   const [selectedRoast, setSelectedRoast] = useState<Roast | null>(null);
   const toast = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { data: orders = [], isLoading: loading } = useOrders(
+    statusFilter || undefined,
+  );
+  const { data: orderRoasts = [] } = useRoastsByOrder(selectedOrder?.id || "");
+
+  const markAsRoasted = useMarkOrderAsRoasted();
+  const markAsDelivered = useMarkOrderAsDelivered();
+
   // Handle cross-page navigation (e.g., from Roasts page clicking an order)
   useEffect(() => {
     const state = location.state as { orderId?: string } | null;
-    if (state?.orderId) {
-      // Clear the state so refreshing doesn't re-trigger
-      navigate('/', { replace: true, state: {} });
-      // Find and open the order
-      getOrders().then((data) => {
-        const order = data.find((o) => o.id === state.orderId);
-        if (order) {
-          setSelectedOrder(order);
-          setViewMode("detail");
-        }
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchOrders = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getOrders(statusFilter || undefined);
-      setOrders(data);
-      // If viewing a detail, refresh the selected order data
-      if (selectedOrder) {
-        const updated = data.find((o) => o.id === selectedOrder.id);
-        if (updated) setSelectedOrder(updated);
-        else {
-          // Order was deleted
-          setSelectedOrder(null);
-          setViewMode("list");
-        }
+    if (state?.orderId && orders.length > 0) {
+      const order = orders.find((o) => o.id === state.orderId);
+      if (order) {
+        setSelectedOrder(order);
+        setViewMode("detail");
+        // Clear the state so refreshing doesn't re-trigger
+        navigate("/", { replace: true, state: {} });
       }
-    } catch {
-      toast({ title: "Error cargando órdenes", status: "error" });
-    } finally {
-      setLoading(false);
     }
-  }, [statusFilter, toast, selectedOrder]);
+  }, [location.state, orders, navigate]);
 
-  const fetchOrderRoasts = useCallback(async (orderId: string) => {
-    try {
-      const data = await getRoastsByOrder(orderId);
-      setOrderRoasts(data);
-    } catch {
-      // silently fail, roasts are supplementary
-      setOrderRoasts([]);
-    }
-  }, []);
-
+  // Sync selectedOrder with updated orders list
   useEffect(() => {
-    fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
-
-  useEffect(() => {
-    if (selectedOrder?.id && (viewMode === "detail")) {
-      fetchOrderRoasts(selectedOrder.id);
+    if (selectedOrder) {
+      const updated = orders.find((o) => o.id === selectedOrder.id);
+      if (updated) {
+        setSelectedOrder(updated);
+      } else if (viewMode === "detail" || viewMode === "edit") {
+        // Order was deleted or no longer exists in current filter
+        setSelectedOrder(null);
+        setViewMode("list");
+      }
     }
-  }, [selectedOrder, viewMode, fetchOrderRoasts]);
+  }, [orders, selectedOrder, viewMode]);
 
   const handleStatusChange = async (
     id: string,
     newStatus: "Tostado" | "Entregado",
   ) => {
     try {
-      if (newStatus === "Tostado") await markOrderAsRoasted(id);
-      if (newStatus === "Entregado") await markOrderAsDelivered(id);
+      if (newStatus === "Tostado") await markAsRoasted.mutateAsync(id);
+      if (newStatus === "Entregado") await markAsDelivered.mutateAsync(id);
       toast({
         title: `Orden marcada como ${newStatus}`,
         status: "success",
       });
-      fetchOrders();
     } catch {
       toast({ title: "Error al actualizar", status: "error" });
     }
@@ -166,10 +137,7 @@ export default function Dashboard() {
     return (
       <CreateOrder
         onClose={() => setViewMode("list")}
-        onCreated={() => {
-          setViewMode("list");
-          fetchOrders();
-        }}
+        onCreated={() => setViewMode("list")}
       />
     );
   }
@@ -179,10 +147,7 @@ export default function Dashboard() {
       <CreateOrder
         editOrder={selectedOrder}
         onClose={() => setViewMode("detail")}
-        onCreated={() => {
-          setViewMode("list");
-          fetchOrders();
-        }}
+        onCreated={() => setViewMode("list")}
       />
     );
   }
@@ -193,15 +158,10 @@ export default function Dashboard() {
         order={selectedOrder}
         onBack={() => {
           setSelectedOrder(null);
-          setOrderRoasts([]);
           setViewMode("list");
-          fetchOrders();
         }}
         onEdit={() => setViewMode("edit")}
-        onRefresh={() => {
-          fetchOrders();
-          if (selectedOrder?.id) fetchOrderRoasts(selectedOrder.id);
-        }}
+        onRefresh={() => {}}
         roasts={orderRoasts}
         onCreateRoast={() => setViewMode("roast")}
         onViewRoast={(roast) => {
@@ -237,10 +197,7 @@ export default function Dashboard() {
     return (
       <RoastForm
         onClose={() => setViewMode("detail")}
-        onCreated={() => {
-          setViewMode("detail");
-          if (selectedOrder?.id) fetchOrderRoasts(selectedOrder.id);
-        }}
+        onCreated={() => setViewMode("detail")}
         preSelectedOrderId={selectedOrder.id}
       />
     );

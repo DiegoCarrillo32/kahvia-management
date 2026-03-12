@@ -1,26 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Box, Flex, Heading, Text, SimpleGrid, Icon, Spinner } from '@chakra-ui/react';
-import { getOrders } from '../services/orderService';
-import { Order } from '../types/order';
+import { useOrders } from '../hooks/useOrders';
 import { TrendingUp, Package, Coffee, DollarSign } from 'lucide-react';
 
 export default function Metrics() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAllOrders = async () => {
-      try {
-        const data = await getOrders(); // fetches all orders
-        setOrders(data);
-      } catch (error) {
-        console.error("Error fetching max orders", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAllOrders();
-  }, []);
+  const { data: orders = [], isLoading: loading } = useOrders();
 
   const metrics = useMemo(() => {
     let totalRevenue = 0;

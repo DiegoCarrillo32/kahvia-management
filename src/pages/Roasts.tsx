@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   Button,
   SimpleGrid,
   HStack,
-  useToast,
   Divider,
 } from "@chakra-ui/react";
 import {
@@ -19,7 +18,7 @@ import {
   Calendar,
   TrendingDown,
 } from "lucide-react";
-import { getRoasts } from "../services/roastService";
+import { useRoasts } from "../hooks/useRoasts";
 import { Roast } from "../types/roast";
 import RoastForm from "./RoastForm";
 import RoastDetail from "./RoastDetail";
@@ -27,28 +26,11 @@ import RoastDetail from "./RoastDetail";
 type ViewMode = "list" | "create" | "detail";
 
 export default function Roasts() {
-  const [roasts, setRoasts] = useState<Roast[]>([]);
-  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedRoast, setSelectedRoast] = useState<Roast | null>(null);
-  const toast = useToast();
   const navigate = useNavigate();
 
-  const fetchRoasts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await getRoasts();
-      setRoasts(data);
-    } catch {
-      toast({ title: "Error cargando tostados", status: "error" });
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchRoasts();
-  }, [fetchRoasts]);
+  const { data: roasts = [], isLoading: loading } = useRoasts();
 
   const formatDate = (timestamp: unknown) => {
     if (!timestamp) return "—";
@@ -79,10 +61,7 @@ export default function Roasts() {
     return (
       <RoastForm
         onClose={() => setViewMode("list")}
-        onCreated={() => {
-          setViewMode("list");
-          fetchRoasts();
-        }}
+        onCreated={() => setViewMode("list")}
       />
     );
   }
@@ -94,10 +73,9 @@ export default function Roasts() {
         onBack={() => {
           setSelectedRoast(null);
           setViewMode("list");
-          fetchRoasts();
         }}
         onViewOrder={(orderId) => {
-          navigate('/', { state: { orderId } });
+          navigate("/", { state: { orderId } });
         }}
       />
     );
