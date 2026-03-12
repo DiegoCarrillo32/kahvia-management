@@ -11,11 +11,20 @@ export const getInventory = async (): Promise<CoffeeBean[]> => {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoffeeBean));
 };
 
-export const addCoffeeBean = async (bean: Omit<CoffeeBean, 'id' | 'updatedAt'>) => {
+export const addCoffeeBean = async (bean: Omit<CoffeeBean, 'id' | 'updatedAt' | 'createdAt'>) => {
   const invRef = collection(db, COLLECTION_NAME);
   await addDoc(invRef, {
     ...bean,
-    updatedAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const updateCoffeeBean = async (id: string, data: Partial<Omit<CoffeeBean, 'id' | 'createdAt'>>) => {
+  const beanRef = doc(db, COLLECTION_NAME, id);
+  await updateDoc(beanRef, {
+    ...data,
+    updatedAt: serverTimestamp(),
   });
 };
 

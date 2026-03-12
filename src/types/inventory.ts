@@ -5,5 +5,10 @@ export interface CoffeeBean {
   roastProfile: string;
   amountGrams: number;
   costPerKg?: number;
+  boughtAt?: string;
+  notes?: string;
+  avgDensity?: number;
+  avgHumidity?: number;
+  createdAt?: unknown;
   updatedAt?: unknown;
 }
