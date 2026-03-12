@@ -45,7 +45,7 @@ describe('Dashboard Integration', () => {
     vi.mocked(useOrdersHook.useOrders).mockReturnValue({
       data: [],
       isLoading: true,
-    } as ReturnType<typeof useOrdersHook.useOrders>);
+    } as unknown as ReturnType<typeof useOrdersHook.useOrders>);
 
     render(<Dashboard />, {
       wrapper: (props) => <AllProviders {...props} queryClient={queryClient} />,
@@ -72,7 +72,7 @@ describe('Dashboard Integration', () => {
     vi.mocked(useOrdersHook.useOrders).mockReturnValue({
       data: mockOrders as Order[],
       isLoading: false,
-    } as ReturnType<typeof useOrdersHook.useOrders>);
+    } as unknown as ReturnType<typeof useOrdersHook.useOrders>);
 
     render(<Dashboard />, {
       wrapper: (props) => <AllProviders {...props} queryClient={queryClient} />,
