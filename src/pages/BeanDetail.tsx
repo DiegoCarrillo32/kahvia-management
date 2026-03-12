@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Flex,
@@ -11,6 +12,7 @@ import {
   VStack,
   IconButton,
   useToast,
+  Spinner,
 } from "@chakra-ui/react";
 import {
   ArrowLeft,
@@ -20,30 +22,62 @@ import {
   Trash2,
   Droplets,
   Weight,
+  Flame,
 } from "lucide-react";
 import { CoffeeBean } from "../types/inventory";
+import { Roast } from "../types/roast";
 import { deleteCoffeeBean } from "../services/inventoryService";
+import { getRoastsByBean } from "../services/roastService";
 
 interface BeanDetailProps {
   bean: CoffeeBean;
   onBack: () => void;
   onEdit: () => void;
   onRefresh: () => void;
+  onRoast: () => void;
 }
 
 export default function BeanDetail({
   bean,
   onBack,
   onEdit,
+  onRoast,
 }: BeanDetailProps) {
   const toast = useToast();
+  const [roastHistory, setRoastHistory] = useState<Roast[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+
+  const fetchHistory = useCallback(async () => {
+    if (!bean.id) return;
+    setLoadingHistory(true);
+    try {
+      const data = await getRoastsByBean(bean.id);
+      setRoastHistory(data);
+    } catch {
+      // silently fail — history is supplementary
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [bean.id]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const formatDate = (timestamp: unknown) => {
     if (!timestamp) return "No registrado";
     const ts = timestamp as { toDate?: () => Date };
-    return ts.toDate
-      ? ts.toDate().toLocaleString()
-      : new Date(timestamp as string | number | Date).toLocaleString();
+    if (ts.toDate) return ts.toDate().toLocaleString();
+    const d = new Date(timestamp as string | number | Date);
+    return isNaN(d.getTime()) ? "No registrado" : d.toLocaleString();
+  };
+
+  const formatShortDate = (timestamp: unknown) => {
+    if (!timestamp) return "—";
+    const ts = timestamp as { toDate?: () => Date };
+    if (ts.toDate) return ts.toDate().toLocaleDateString();
+    const d = new Date(timestamp as string | number | Date);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
   };
 
   const handleDelete = async () => {
@@ -61,6 +95,12 @@ export default function BeanDetail({
       toast({ title: "Error al eliminar", status: "error" });
     }
   };
+
+  // Calculate total grams used from this bean
+  const totalUsed = roastHistory.reduce((sum, roast) => {
+    const ing = roast.ingredients.find((i) => i.beanId === bean.id);
+    return sum + (ing?.gramsUsed || 0);
+  }, 0);
 
   return (
     <Box
@@ -89,7 +129,17 @@ export default function BeanDetail({
           </Heading>
         </Flex>
 
-        <HStack spacing={2}>
+        <HStack spacing={2} flexWrap="wrap">
+          <Button
+            leftIcon={<Flame size={16} />}
+            size="sm"
+            bg="var(--color-warm-roast)"
+            color="white"
+            _hover={{ bg: "var(--color-expresso)" }}
+            onClick={onRoast}
+          >
+            Crear Tostado
+          </Button>
           <Button
             leftIcon={<Pencil size={16} />}
             size="sm"
@@ -214,6 +264,70 @@ export default function BeanDetail({
               <Text fontStyle="italic">{bean.notes}</Text>
             </Box>
           </>
+        )}
+
+        {/* Roast History */}
+        <Divider mb={4} />
+        <Flex justify="space-between" align="center" mb={3}>
+          <Heading size="sm" color="var(--color-expresso)">
+            Historial de Tostados
+          </Heading>
+          {roastHistory.length > 0 && (
+            <Badge colorScheme="orange">
+              {totalUsed.toLocaleString()}g tostados en total
+            </Badge>
+          )}
+        </Flex>
+
+        {loadingHistory ? (
+          <Flex justify="center" py={4}>
+            <Spinner size="sm" color="var(--color-warm-roast)" />
+          </Flex>
+        ) : roastHistory.length === 0 ? (
+          <Box bg="gray.50" p={4} borderRadius="md" mb={6}>
+            <Text fontSize="sm" color="gray.500" textAlign="center">
+              Este grano no ha sido tostado aún
+            </Text>
+          </Box>
+        ) : (
+          <VStack spacing={2} mb={6} align="stretch">
+            {roastHistory.map((roast) => {
+              const ing = roast.ingredients.find((i) => i.beanId === bean.id);
+              const isBlend = roast.ingredients.length > 1;
+              return (
+                <Box
+                  key={roast.id}
+                  bg="gray.50"
+                  p={3}
+                  borderRadius="md"
+                  borderLeftWidth={3}
+                  borderLeftColor="var(--color-warm-roast)"
+                >
+                  <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
+                    <HStack>
+                      <Flame size={14} color="var(--color-warm-roast)" />
+                      <Text fontSize="sm" fontWeight="medium">
+                        {formatShortDate(roast.roastedAt)}
+                      </Text>
+                      {isBlend && (
+                        <Badge fontSize="xs" variant="subtle">
+                          Blend
+                        </Badge>
+                      )}
+                    </HStack>
+                    <HStack spacing={3}>
+                      <Badge colorScheme="blue">
+                        {ing?.gramsUsed.toLocaleString()}g usados
+                      </Badge>
+                      <Text fontSize="xs" color="gray.500">
+                        {roast.roastLevel} • Pérdida: {roast.lossPercentage}%
+                      </Text>
+                    </HStack>
+                  </Flex>
+                </Box>
+              );
+            })}
+          </VStack>
         )}
 
         {/* Timestamps */}

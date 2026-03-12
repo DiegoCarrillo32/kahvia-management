@@ -17,8 +17,9 @@ import { getInventory } from "../services/inventoryService";
 import { CoffeeBean } from "../types/inventory";
 import BeanDetail from "./BeanDetail";
 import BeanForm from "./BeanForm";
+import RoastForm from "./RoastForm";
 
-type ViewMode = "list" | "create" | "detail" | "edit";
+type ViewMode = "list" | "create" | "detail" | "edit" | "roast";
 
 export default function Inventory() {
   const [beans, setBeans] = useState<CoffeeBean[]>([]);
@@ -80,6 +81,19 @@ export default function Inventory() {
     );
   }
 
+  if (viewMode === "roast" && selectedBean) {
+    return (
+      <RoastForm
+        preSelectedBeanId={selectedBean.id}
+        onClose={() => setViewMode("detail")}
+        onCreated={() => {
+          setViewMode("detail");
+          fetchData();
+        }}
+      />
+    );
+  }
+
   if (viewMode === "detail" && selectedBean) {
     return (
       <BeanDetail
@@ -91,6 +105,7 @@ export default function Inventory() {
         }}
         onEdit={() => setViewMode("edit")}
         onRefresh={fetchData}
+        onRoast={() => setViewMode("roast")}
       />
     );
   }

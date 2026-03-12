@@ -19,9 +19,11 @@ import {
   ClipboardList,
   Package,
   BarChart3,
+  Flame,
 } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
+import Roasts from "./pages/Roasts";
 import Metrics from "./pages/Metrics";
 import Login from "./pages/Login";
 
@@ -82,6 +84,22 @@ const MobileBottomNav = () => {
           Inventario
         </Flex>
       </Link>
+      <Link to="/roasts">
+        <Flex
+          direction="column"
+          align="center"
+          px={3}
+          py={1}
+          borderRadius="md"
+          bg={isActive("/roasts") ? "whiteAlpha.200" : "transparent"}
+          color="white"
+          fontSize="xs"
+          gap={1}
+        >
+          <Flame size={20} />
+          Tostados
+        </Flex>
+      </Link>
       <Link to="/metrics">
         <Flex
           direction="column"
@@ -133,6 +151,13 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           onClick={onClose}
         >
           Inventario
+        </Link>
+        <Link
+          to="/roasts"
+          className="hover:text-warm-roast transition-colors py-2"
+          onClick={onClose}
+        >
+          Tostados
         </Link>
         <Link
           to="/metrics"
@@ -262,6 +287,16 @@ function App() {
               <PrivateRoute>
                 <Layout>
                   <Inventory />
+                </Layout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/roasts"
+            element={
+              <PrivateRoute>
+                <Layout>
+                  <Roasts />
                 </Layout>
               </PrivateRoute>
             }
