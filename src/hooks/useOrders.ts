@@ -14,7 +14,7 @@ export const useCreateOrder = () => {
   return useMutation({
     mutationFn: orderService.createOrder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      return queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };
@@ -24,7 +24,7 @@ export const useMarkOrderAsRoasted = () => {
   return useMutation({
     mutationFn: orderService.markOrderAsRoasted,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      return queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };
@@ -34,7 +34,7 @@ export const useMarkOrderAsDelivered = () => {
   return useMutation({
     mutationFn: orderService.markOrderAsDelivered,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      return queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };
@@ -45,7 +45,7 @@ export const useUpdateOrder = () => {
     mutationFn: ({ orderId, data }: { orderId: string; data: Partial<Omit<Order, 'id' | 'createdAt'>> }) => 
       orderService.updateOrder(orderId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      return queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };
@@ -55,7 +55,7 @@ export const useDeleteOrder = () => {
   return useMutation({
     mutationFn: orderService.deleteOrder,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      return queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 };

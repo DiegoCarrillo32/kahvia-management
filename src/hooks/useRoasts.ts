@@ -12,9 +12,11 @@ export const useCreateRoast = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: roastService.createRoast,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roasts'] });
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['roasts'] }),
+        queryClient.invalidateQueries({ queryKey: ['inventory'] })
+      ]);
     },
   });
 };
@@ -24,7 +26,7 @@ export const useDeleteRoast = () => {
   return useMutation({
     mutationFn: roastService.deleteRoast,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roasts'] });
+      return queryClient.invalidateQueries({ queryKey: ['roasts'] });
     },
   });
 };

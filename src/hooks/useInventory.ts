@@ -14,7 +14,7 @@ export const useAddCoffeeBean = () => {
   return useMutation({
     mutationFn: inventoryService.addCoffeeBean,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      return queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };
@@ -25,7 +25,7 @@ export const useUpdateCoffeeBean = () => {
     mutationFn: ({ id, data }: { id: string; data: Partial<Omit<CoffeeBean, 'id' | 'createdAt'>> }) => 
       inventoryService.updateCoffeeBean(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      return queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };
@@ -36,7 +36,7 @@ export const useUpdateCoffeeBeanAmount = () => {
     mutationFn: ({ id, newAmountGrams }: { id: string; newAmountGrams: number }) => 
       inventoryService.updateCoffeeBeanAmount(id, newAmountGrams),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      return queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };
@@ -46,7 +46,7 @@ export const useDeleteCoffeeBean = () => {
   return useMutation({
     mutationFn: inventoryService.deleteCoffeeBean,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      return queryClient.invalidateQueries({ queryKey: ['inventory'] });
     },
   });
 };
