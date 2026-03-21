@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useOrders, useCreateOrder } from '../hooks/useOrders';
+import { useOrders, useCreateOrder, useOrder } from '../hooks/useOrders';
 import * as orderService from '../services/orderService';
 import { createTestQueryClient, createWrapper } from '../test/query-wrapper';
 import { Order } from '../types/order';
@@ -8,6 +8,7 @@ import { QueryClient } from '@tanstack/react-query';
 
 vi.mock('../services/orderService', () => ({
   getOrders: vi.fn(),
+  getOrder: vi.fn(),
   createOrder: vi.fn(),
   markOrderAsRoasted: vi.fn(),
   markOrderAsDelivered: vi.fn(),
@@ -33,6 +34,18 @@ describe('useOrders Hook', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.data).toEqual(mockOrders);
+  });
+
+  it('should fetch a single order successfully', async () => {
+    const mockOrder: Order = { id: '123', clientName: 'Single Test' } as Order;
+    vi.mocked(orderService.getOrder).mockResolvedValueOnce(mockOrder);
+
+    const { result } = renderHook(() => useOrder('123'), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual(mockOrder);
   });
 
   it('should invalidate queries on createOrder success', async () => {

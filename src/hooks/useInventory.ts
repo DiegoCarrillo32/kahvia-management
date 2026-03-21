@@ -50,3 +50,11 @@ export const useDeleteCoffeeBean = () => {
     },
   });
 };
+
+export const useCoffeeBean = (id: string) => {
+  return useQuery({
+    queryKey: ['inventory', id],
+    queryFn: () => inventoryService.getCoffeeBean(id),
+    enabled: !!id,
+  });
+};

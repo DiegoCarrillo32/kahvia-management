@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -13,31 +14,15 @@ import {
 } from "@chakra-ui/react";
 import { Plus, Package, ChevronRight } from "lucide-react";
 import { useInventory } from "../hooks/useInventory";
-import { CoffeeBean } from "../types/inventory";
-import BeanDetail from "./BeanDetail";
 import BeanForm from "./BeanForm";
-import RoastForm from "./RoastForm";
 
-type ViewMode = "list" | "create" | "detail" | "edit" | "roast";
+type ViewMode = "list" | "create";
 
 export default function Inventory() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedBean, setSelectedBean] = useState<CoffeeBean | null>(null);
+  const navigate = useNavigate();
 
   const { data: beans = [], isLoading: loading } = useInventory();
-
-  // Refresh selected bean data if viewing detail
-  useEffect(() => {
-    if (selectedBean) {
-      const updated = beans.find((b) => b.id === selectedBean.id);
-      if (updated) {
-        setSelectedBean(updated);
-      } else if (viewMode === "detail" || viewMode === "edit") {
-        setSelectedBean(null);
-        setViewMode("list");
-      }
-    }
-  }, [beans, selectedBean, viewMode]);
 
   // --- VIEW MODES ---
 
@@ -46,41 +31,6 @@ export default function Inventory() {
       <BeanForm
         onClose={() => setViewMode("list")}
         onSaved={() => setViewMode("list")}
-      />
-    );
-  }
-
-  if (viewMode === "edit" && selectedBean) {
-    return (
-      <BeanForm
-        editBean={selectedBean}
-        onClose={() => setViewMode("detail")}
-        onSaved={() => setViewMode("list")}
-      />
-    );
-  }
-
-  if (viewMode === "roast" && selectedBean) {
-    return (
-      <RoastForm
-        preSelectedBeanId={selectedBean.id}
-        onClose={() => setViewMode("detail")}
-        onCreated={() => setViewMode("detail")}
-      />
-    );
-  }
-
-  if (viewMode === "detail" && selectedBean) {
-    return (
-      <BeanDetail
-        bean={selectedBean}
-        onBack={() => {
-          setSelectedBean(null);
-          setViewMode("list");
-        }}
-        onEdit={() => setViewMode("edit")}
-        onRefresh={() => {}}
-        onRoast={() => setViewMode("roast")}
       />
     );
   }
@@ -163,10 +113,7 @@ export default function Inventory() {
               transition="all 0.2s"
               _hover={{ shadow: "lg", transform: "translateY(-2px)" }}
               cursor="pointer"
-              onClick={() => {
-                setSelectedBean(bean);
-                setViewMode("detail");
-              }}
+              onClick={() => navigate(`/inventory/${bean.id}`)}
             >
               <Flex justify="space-between" align="start" mb={2}>
                 <VStack align="start" spacing={0}>

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getDocs } from 'firebase/firestore';
-import { getOrders, createOrder } from '../services/orderService';
+import { getDocs, getDoc } from 'firebase/firestore';
+import { getOrders, createOrder, getOrder } from '../services/orderService';
 
 // Setup firebase mocks
 vi.mock('firebase/app', () => ({
@@ -16,6 +16,7 @@ vi.mock('firebase/firestore', () => ({
   collection: vi.fn(),
   doc: vi.fn(),
   getDocs: vi.fn(),
+  getDoc: vi.fn(),
   addDoc: vi.fn(() => Promise.resolve({ id: 'new-order-id' })),
   updateDoc: vi.fn(() => Promise.resolve()),
   deleteDoc: vi.fn(() => Promise.resolve()),
@@ -109,6 +110,32 @@ describe('orderService', () => {
       const orders = await getOrders('Pendiente');
       expect(orders).toHaveLength(1);
       expect(orders[0].status).toBe('Pendiente');
+    });
+  });
+
+  describe('getOrder', () => {
+    it('should return a single order when it exists', async () => {
+      const mockSnap = {
+        exists: () => true,
+        id: '123',
+        data: () => ({ clientName: 'Test' })
+      };
+      
+      vi.mocked(getDoc).mockResolvedValueOnce(mockSnap as never);
+
+      const order = await getOrder('123');
+      expect(order).toEqual({ id: '123', clientName: 'Test' });
+    });
+
+    it('should return null when order does not exist', async () => {
+      const mockSnap = {
+        exists: () => false,
+      };
+      
+      vi.mocked(getDoc).mockResolvedValueOnce(mockSnap as never);
+
+      const order = await getOrder('123');
+      expect(order).toBeNull();
     });
   });
 

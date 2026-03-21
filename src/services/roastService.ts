@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   deleteDoc,
   query,
@@ -81,4 +82,13 @@ export const getRoastsByOrder = async (orderId: string): Promise<Roast[]> => {
 export const deleteRoast = async (roastId: string) => {
   const roastRef = doc(db, COLLECTION_NAME, roastId);
   await deleteDoc(roastRef);
+};
+
+export const getRoast = async (roastId: string): Promise<Roast | null> => {
+  const roastRef = doc(db, COLLECTION_NAME, roastId);
+  const snap = await getDoc(roastRef);
+  if (snap.exists()) {
+    return { id: snap.id, ...snap.data() } as Roast;
+  }
+  return null;
 };

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -11,6 +13,8 @@ import {
   VStack,
   IconButton,
   useToast,
+  Spinner,
+  Center,
 } from "@chakra-ui/react";
 import {
   ArrowLeft,
@@ -25,35 +29,29 @@ import {
   Trash2,
   Flame,
   Plus,
+  Share2,
 } from "lucide-react";
-import { Roast } from "../types/roast";
-import { Order, OrderStatus } from "../types/order";
+import { OrderStatus } from "../types/order";
 import {
   markOrderAsRoasted,
   markOrderAsDelivered,
   deleteOrder,
 } from "../services/orderService";
+import { useOrder } from "../hooks/useOrders";
+import { useRoastsByOrder } from "../hooks/useRoasts";
+import CreateOrder from "./CreateOrder";
+import RoastForm from "./RoastForm";
 
-interface OrderDetailProps {
-  order: Order;
-  onBack: () => void;
-  onEdit: () => void;
-  onRefresh: () => void;
-  roasts?: Roast[];
-  onCreateRoast?: () => void;
-  onViewRoast?: (roast: Roast) => void;
-}
-
-export default function OrderDetail({
-  order,
-  onBack,
-  onEdit,
-  onRefresh,
-  roasts = [],
-  onCreateRoast,
-  onViewRoast,
-}: OrderDetailProps) {
+export default function OrderDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const toast = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingRoast, setIsCreatingRoast] = useState(false);
+
+  const { data: order, isLoading } = useOrder(id || "");
+  const { data: roasts = [] } = useRoastsByOrder(id || "");
+
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -96,13 +94,12 @@ export default function OrderDetail({
 
   const handleStatusChange = async (newStatus: "Tostado" | "Entregado") => {
     try {
-      if (newStatus === "Tostado") await markOrderAsRoasted(order.id!);
-      if (newStatus === "Entregado") await markOrderAsDelivered(order.id!);
+      if (newStatus === "Tostado") await markOrderAsRoasted(order!.id!);
+      if (newStatus === "Entregado") await markOrderAsDelivered(order!.id!);
       toast({
         title: `Orden marcada como ${newStatus}`,
         status: "success",
       });
-      onRefresh();
     } catch {
       toast({ title: "Error al actualizar", status: "error" });
     }
@@ -116,15 +113,16 @@ export default function OrderDetail({
     )
       return;
     try {
-      await deleteOrder(order.id!);
+      await deleteOrder(order!.id!);
       toast({ title: "Orden eliminada", status: "info" });
-      onBack();
+      navigate("/");
     } catch {
       toast({ title: "Error al eliminar", status: "error" });
     }
   };
 
   const openWhatsApp = () => {
+    if (!order) return;
     const cleanPhone = order.clientPhone.replace(/\D/g, "");
     const message = `Hola ${order.clientName}, te escribimos de Kahvia. `;
     window.open(
@@ -132,6 +130,66 @@ export default function OrderDetail({
       "_blank",
     );
   };
+
+  const openWhatsAppReminder = () => {
+    if (!order) return;
+    const cleanPhone = order.clientPhone.replace(/\D/g, "");
+    const message = `Hola ${order.clientName}, te escribimos de Kahvia para recordarte el pago pendiente de tu orden. ¡Gracias!`;
+    window.open(
+      `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`,
+      "_blank",
+    );
+  };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Enlace copiado",
+      status: "success",
+      duration: 2000,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Center minH="100vh" bg="var(--color-white-pergamino)">
+        <Spinner color="var(--color-expresso)" />
+      </Center>
+    );
+  }
+
+  if (!order) {
+    return (
+      <Center minH="100vh" flexDirection="column" gap={4} bg="var(--color-white-pergamino)">
+        <Text color="var(--color-expresso)" fontSize="lg">
+          La orden no existe o ha sido eliminada
+        </Text>
+        <Button onClick={() => navigate("/")} colorScheme="blue">
+          Volver a Órdenes
+        </Button>
+      </Center>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <CreateOrder
+        editOrder={order}
+        onClose={() => setIsEditing(false)}
+        onCreated={() => setIsEditing(false)}
+      />
+    );
+  }
+
+  if (isCreatingRoast) {
+    return (
+      <RoastForm
+        preSelectedOrderId={order.id}
+        onClose={() => setIsCreatingRoast(false)}
+        onCreated={() => setIsCreatingRoast(false)}
+      />
+    );
+  }
 
   return (
     <Box
@@ -147,7 +205,7 @@ export default function OrderDetail({
             aria-label="Volver"
             icon={<ArrowLeft size={20} />}
             variant="ghost"
-            onClick={onBack}
+            onClick={() => navigate("/")}
             color="var(--color-expresso)"
           />
           <Heading
@@ -161,12 +219,19 @@ export default function OrderDetail({
         </Flex>
 
         <HStack spacing={2}>
+          <IconButton
+            aria-label="Compartir"
+            icon={<Share2 size={16} />}
+            size="sm"
+            variant="ghost"
+            onClick={handleShare}
+          />
           <Button
             leftIcon={<Pencil size={16} />}
             size="sm"
             variant="outline"
             colorScheme="blue"
-            onClick={onEdit}
+            onClick={() => setIsEditing(true)}
           >
             Editar
           </Button>
@@ -343,18 +408,16 @@ export default function OrderDetail({
           <Heading size="sm" color="var(--color-expresso)">
             Tostados Asociados ({roasts.length})
           </Heading>
-          {onCreateRoast && (
-            <Button
-              leftIcon={<Plus size={14} />}
-              size="xs"
-              bg="var(--color-warm-roast)"
-              color="white"
-              _hover={{ bg: "var(--color-expresso)" }}
-              onClick={onCreateRoast}
-            >
-              Crear Tostado
-            </Button>
-          )}
+          <Button
+            leftIcon={<Plus size={14} />}
+            size="xs"
+            bg="var(--color-warm-roast)"
+            color="white"
+            _hover={{ bg: "var(--color-expresso)" }}
+            onClick={() => setIsCreatingRoast(true)}
+          >
+            Crear Tostado
+          </Button>
         </Flex>
 
         {roasts.length === 0 ? (
@@ -386,10 +449,10 @@ export default function OrderDetail({
                   borderRadius="md"
                   borderWidth={1}
                   borderColor="orange.200"
-                  cursor={onViewRoast ? "pointer" : "default"}
+                  cursor="pointer"
                   transition="all 0.2s"
-                  _hover={onViewRoast ? { shadow: "md", borderColor: "orange.400" } : {}}
-                  onClick={() => onViewRoast?.(roast)}
+                  _hover={{ shadow: "md", borderColor: "orange.400" }}
+                  onClick={() => navigate(`/roast/${roast.id}`)}
                 >
                   <Flex justify="space-between" align="center" mb={1}>
                     <HStack>
@@ -435,6 +498,21 @@ export default function OrderDetail({
           >
             WhatsApp
           </Button>
+
+          {!order.paid && (
+            <Button
+              flex={1}
+              leftIcon={<MessageCircle size={14} />}
+              colorScheme="orange"
+              variant="outline"
+              size="sm"
+              onClick={openWhatsAppReminder}
+              padding={2}
+              iconSpacing={3}
+            >
+              Recordar Pago
+            </Button>
+          )}
 
           {order.status === "Pendiente" && (
             <Button

@@ -59,3 +59,11 @@ export const useDeleteOrder = () => {
     },
   });
 };
+
+export const useOrder = (orderId: string) => {
+  return useQuery({
+    queryKey: ['orders', orderId],
+    queryFn: () => orderService.getOrder(orderId),
+    enabled: !!orderId,
+  });
+};

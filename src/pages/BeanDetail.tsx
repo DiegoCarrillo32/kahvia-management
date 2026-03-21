@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -13,6 +14,7 @@ import {
   IconButton,
   useToast,
   Spinner,
+  Center,
 } from "@chakra-ui/react";
 import {
   ArrowLeft,
@@ -23,32 +25,29 @@ import {
   Droplets,
   Weight,
   Flame,
+  Share2,
 } from "lucide-react";
-import { CoffeeBean } from "../types/inventory";
 import { Roast } from "../types/roast";
 import { deleteCoffeeBean } from "../services/inventoryService";
 import { getRoastsByBean } from "../services/roastService";
+import { useCoffeeBean } from "../hooks/useInventory";
+import BeanForm from "./BeanForm";
+import RoastForm from "./RoastForm";
 
-interface BeanDetailProps {
-  bean: CoffeeBean;
-  onBack: () => void;
-  onEdit: () => void;
-  onRefresh: () => void;
-  onRoast: () => void;
-}
-
-export default function BeanDetail({
-  bean,
-  onBack,
-  onEdit,
-  onRoast,
-}: BeanDetailProps) {
+export default function BeanDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const toast = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isRoasting, setIsRoasting] = useState(false);
+
+  const { data: bean, isLoading } = useCoffeeBean(id || "");
+
   const [roastHistory, setRoastHistory] = useState<Roast[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   const fetchHistory = useCallback(async () => {
-    if (!bean.id) return;
+    if (!bean?.id) return;
     setLoadingHistory(true);
     try {
       const data = await getRoastsByBean(bean.id);
@@ -58,11 +57,12 @@ export default function BeanDetail({
     } finally {
       setLoadingHistory(false);
     }
-  }, [bean.id]);
+  }, [bean?.id]);
 
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+
 
   const formatDate = (timestamp: unknown) => {
     if (!timestamp) return "No registrado";
@@ -81,6 +81,7 @@ export default function BeanDetail({
   };
 
   const handleDelete = async () => {
+    if (!bean) return;
     if (
       !confirm(
         "¿Estás seguro de que deseas eliminar este grano? Esta acción no se puede deshacer."
@@ -90,11 +91,61 @@ export default function BeanDetail({
     try {
       await deleteCoffeeBean(bean.id!);
       toast({ title: "Grano eliminado", status: "info" });
-      onBack();
+      navigate("/inventory");
     } catch {
       toast({ title: "Error al eliminar", status: "error" });
     }
   };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Enlace copiado",
+      status: "success",
+      duration: 2000,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Center minH="100vh" bg="var(--color-white-pergamino)">
+        <Spinner color="var(--color-expresso)" />
+      </Center>
+    );
+  }
+
+  if (!bean) {
+    return (
+      <Center minH="100vh" flexDirection="column" gap={4} bg="var(--color-white-pergamino)">
+        <Text color="var(--color-expresso)" fontSize="lg">
+          El grano no existe o ha sido eliminado
+        </Text>
+        <Button onClick={() => navigate("/inventory")} colorScheme="blue">
+          Volver al Inventario
+        </Button>
+      </Center>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <BeanForm
+        editBean={bean}
+        onClose={() => setIsEditing(false)}
+        onSaved={() => setIsEditing(false)}
+      />
+    );
+  }
+
+  if (isRoasting) {
+    return (
+      <RoastForm
+        preSelectedBeanId={bean.id}
+        onClose={() => setIsRoasting(false)}
+        onCreated={() => setIsRoasting(false)}
+      />
+    );
+  }
 
   // Calculate total grams used from this bean
   const totalUsed = roastHistory.reduce((sum, roast) => {
@@ -116,7 +167,7 @@ export default function BeanDetail({
             aria-label="Volver"
             icon={<ArrowLeft size={20} />}
             variant="ghost"
-            onClick={onBack}
+            onClick={() => navigate("/inventory")}
             color="var(--color-expresso)"
           />
           <Heading
@@ -130,13 +181,20 @@ export default function BeanDetail({
         </Flex>
 
         <HStack spacing={2} flexWrap="wrap">
+          <IconButton
+            aria-label="Compartir"
+            icon={<Share2 size={16} />}
+            size="sm"
+            variant="ghost"
+            onClick={handleShare}
+          />
           <Button
             leftIcon={<Flame size={16} />}
             size="sm"
             bg="var(--color-warm-roast)"
             color="white"
             _hover={{ bg: "var(--color-expresso)" }}
-            onClick={onRoast}
+            onClick={() => setIsRoasting(true)}
           >
             Crear Tostado
           </Button>
@@ -145,7 +203,7 @@ export default function BeanDetail({
             size="sm"
             variant="outline"
             colorScheme="blue"
-            onClick={onEdit}
+            onClick={() => setIsEditing(true)}
           >
             Editar
           </Button>

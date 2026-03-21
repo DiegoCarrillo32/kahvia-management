@@ -46,3 +46,11 @@ export const useRoastsByOrder = (orderId: string) => {
     enabled: !!orderId,
   });
 };
+
+export const useRoast = (roastId: string) => {
+  return useQuery({
+    queryKey: ['roasts', roastId],
+    queryFn: () => roastService.getRoast(roastId),
+    enabled: !!roastId,
+  });
+};

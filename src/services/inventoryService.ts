@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { CoffeeBean } from '../types/inventory';
 
@@ -39,4 +39,13 @@ export const updateCoffeeBeanAmount = async (id: string, newAmountGrams: number)
 export const deleteCoffeeBean = async (id: string) => {
   const beanRef = doc(db, COLLECTION_NAME, id);
   await deleteDoc(beanRef);
+};
+
+export const getCoffeeBean = async (id: string): Promise<CoffeeBean | null> => {
+  const beanRef = doc(db, COLLECTION_NAME, id);
+  const snap = await getDoc(beanRef);
+  if (snap.exists()) {
+    return { id: snap.id, ...snap.data() } as CoffeeBean;
+  }
+  return null;
 };

@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, query, orderBy, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order, OrderStatus } from '../types/order';
 
@@ -49,4 +49,13 @@ export const updateOrder = async (orderId: string, data: Partial<Omit<Order, 'id
 export const deleteOrder = async (orderId: string) => {
   const orderRef = doc(db, COLLECTION_NAME, orderId);
   await deleteDoc(orderRef);
+};
+
+export const getOrder = async (orderId: string): Promise<Order | null> => {
+  const orderRef = doc(db, COLLECTION_NAME, orderId);
+  const snap = await getDoc(orderRef);
+  if (snap.exists()) {
+    return { id: snap.id, ...snap.data() } as Order;
+  }
+  return null;
 };

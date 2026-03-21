@@ -1,3 +1,4 @@
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -11,6 +12,8 @@ import {
   VStack,
   IconButton,
   useToast,
+  Spinner,
+  Center,
 } from "@chakra-ui/react";
 import {
   ArrowLeft,
@@ -21,18 +24,17 @@ import {
   User,
   TrendingDown,
   ChevronRight,
+  Share2,
 } from "lucide-react";
-import { Roast } from "../types/roast";
+import { useRoast } from "../hooks/useRoasts";
 import { deleteRoast } from "../services/roastService";
 
-interface RoastDetailProps {
-  roast: Roast;
-  onBack: () => void;
-  onViewOrder?: (orderId: string) => void;
-}
-
-export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailProps) {
+export default function RoastDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const toast = useToast();
+
+  const { data: roast, isLoading } = useRoast(id || "");
 
   const formatDate = (timestamp: unknown) => {
     if (!timestamp) return "No registrado";
@@ -58,6 +60,7 @@ export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailP
   };
 
   const handleDelete = async () => {
+    if (!roast) return;
     if (
       !confirm(
         "¿Eliminar este registro de tostado? Esta acción no se puede deshacer."
@@ -67,11 +70,41 @@ export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailP
     try {
       await deleteRoast(roast.id!);
       toast({ title: "Tostado eliminado", status: "info" });
-      onBack();
+      navigate("/roasts");
     } catch {
       toast({ title: "Error al eliminar", status: "error" });
     }
   };
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast({
+      title: "Enlace copiado",
+      status: "success",
+      duration: 2000,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Center minH="100vh" bg="var(--color-white-pergamino)">
+        <Spinner color="var(--color-expresso)" />
+      </Center>
+    );
+  }
+
+  if (!roast) {
+    return (
+      <Center minH="100vh" flexDirection="column" gap={4} bg="var(--color-white-pergamino)">
+        <Text color="var(--color-expresso)" fontSize="lg">
+          El tostado no existe o ha sido eliminado
+        </Text>
+        <Button onClick={() => navigate("/roasts")} colorScheme="blue">
+          Volver a Tostados
+        </Button>
+      </Center>
+    );
+  }
 
   const isBlend = roast.ingredients.length > 1;
 
@@ -89,7 +122,7 @@ export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailP
             aria-label="Volver"
             icon={<ArrowLeft size={20} />}
             variant="ghost"
-            onClick={onBack}
+            onClick={() => navigate("/roasts")}
             color="var(--color-expresso)"
           />
           <Heading
@@ -101,15 +134,24 @@ export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailP
             Detalle de Tostado
           </Heading>
         </Flex>
-        <Button
-          leftIcon={<Trash2 size={16} />}
-          size="sm"
-          variant="outline"
-          colorScheme="red"
-          onClick={handleDelete}
-        >
-          Eliminar
-        </Button>
+        <HStack spacing={2}>
+          <IconButton
+            aria-label="Compartir"
+            icon={<Share2 size={16} />}
+            size="sm"
+            variant="ghost"
+            onClick={handleShare}
+          />
+          <Button
+            leftIcon={<Trash2 size={16} />}
+            size="sm"
+            variant="outline"
+            colorScheme="red"
+            onClick={handleDelete}
+          >
+            Eliminar
+          </Button>
+        </HStack>
       </Flex>
 
       {/* Card */}
@@ -320,16 +362,16 @@ export default function RoastDetail({ roast, onBack, onViewOrder }: RoastDetailP
               mb={6}
               borderWidth={1}
               borderColor="blue.200"
-              cursor={onViewOrder && roast.orderId ? "pointer" : "default"}
+              cursor={roast.orderId ? "pointer" : "default"}
               transition="all 0.2s"
-              _hover={onViewOrder && roast.orderId ? { shadow: "md", borderColor: "blue.400" } : {}}
-              onClick={() => roast.orderId && onViewOrder?.(roast.orderId)}
+              _hover={roast.orderId ? { shadow: "md", borderColor: "blue.400" } : {}}
+              onClick={() => roast.orderId && navigate(`/order/${roast.orderId}`)}
             >
               <Flex justify="space-between" align="center">
                 <Text fontWeight="medium" color="var(--color-expresso)">
                   {roast.orderClientName}
                 </Text>
-                {onViewOrder && roast.orderId && (
+                {roast.orderId && (
                   <ChevronRight size={16} color="gray" />
                 )}
               </Flex>

@@ -26,6 +26,9 @@ import Inventory from "./pages/Inventory";
 import Roasts from "./pages/Roasts";
 import Metrics from "./pages/Metrics";
 import Login from "./pages/Login";
+import OrderDetail from "./pages/OrderDetail";
+import BeanDetail from "./pages/BeanDetail";
+import RoastDetail from "./pages/RoastDetail";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
@@ -312,6 +315,36 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <Metrics />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/order/:id"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <OrderDetail />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/inventory/:id"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <BeanDetail />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/roast/:id"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <RoastDetail />
                   </Layout>
                 </PrivateRoute>
               }

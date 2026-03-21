@@ -19,16 +19,14 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { useRoasts } from "../hooks/useRoasts";
-import { Roast } from "../types/roast";
 import RoastForm from "./RoastForm";
-import RoastDetail from "./RoastDetail";
 
-type ViewMode = "list" | "create" | "detail";
+type ViewMode = "list" | "create";
 
 export default function Roasts() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedRoast, setSelectedRoast] = useState<Roast | null>(null);
   const navigate = useNavigate();
+
 
   const { data: roasts = [], isLoading: loading } = useRoasts();
 
@@ -62,21 +60,6 @@ export default function Roasts() {
       <RoastForm
         onClose={() => setViewMode("list")}
         onCreated={() => setViewMode("list")}
-      />
-    );
-  }
-
-  if (viewMode === "detail" && selectedRoast) {
-    return (
-      <RoastDetail
-        roast={selectedRoast}
-        onBack={() => {
-          setSelectedRoast(null);
-          setViewMode("list");
-        }}
-        onViewOrder={(orderId) => {
-          navigate("/", { state: { orderId } });
-        }}
       />
     );
   }
@@ -166,10 +149,7 @@ export default function Roasts() {
                 transition="all 0.2s"
                 _hover={{ shadow: "lg", transform: "translateY(-2px)" }}
                 cursor="pointer"
-                onClick={() => {
-                  setSelectedRoast(roast);
-                  setViewMode("detail");
-                }}
+                onClick={() => navigate(`/roast/${roast.id}`)}
               >
                 <Flex justify="space-between" align="start" mb={2}>
                   <Box>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Flex,
@@ -14,6 +14,7 @@ import {
   HStack,
   Divider,
   useToast,
+  ButtonGroup,
 } from "@chakra-ui/react";
 import {
   Coffee,
@@ -24,66 +25,56 @@ import {
   CheckCircle,
   Plus,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import {
   useOrders,
   useMarkOrderAsRoasted,
   useMarkOrderAsDelivered,
 } from "../hooks/useOrders";
-import { useRoastsByOrder } from "../hooks/useRoasts";
-import { Order, OrderStatus } from "../types/order";
-import { Roast } from "../types/roast";
+import { OrderStatus } from "../types/order";
 import CreateOrder from "./CreateOrder";
-import OrderDetail from "./OrderDetail";
-import RoastForm from "./RoastForm";
-import RoastDetail from "./RoastDetail";
 
-type ViewMode = "list" | "create" | "detail" | "edit" | "roast" | "roastDetail";
+type ViewMode = "list" | "create";
+
 
 export default function Dashboard() {
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("Pendiente");
+  const [paymentFilter, setPaymentFilter] = useState<"all" | "pending" | "paid">("all");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [selectedRoast, setSelectedRoast] = useState<Roast | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
   const toast = useToast();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const { data: orders = [], isLoading: loading } = useOrders(
+  const { data: allOrders = [], isLoading: loading } = useOrders(
     statusFilter || undefined,
   );
-  const { data: orderRoasts = [] } = useRoastsByOrder(selectedOrder?.id || "");
 
   const markAsRoasted = useMarkOrderAsRoasted();
   const markAsDelivered = useMarkOrderAsDelivered();
 
-  // Handle cross-page navigation (e.g., from Roasts page clicking an order)
-  useEffect(() => {
-    const state = location.state as { orderId?: string } | null;
-    if (state?.orderId && orders.length > 0) {
-      const order = orders.find((o) => o.id === state.orderId);
-      if (order) {
-        setSelectedOrder(order);
-        setViewMode("detail");
-        // Clear the state so refreshing doesn't re-trigger
-        navigate("/", { replace: true, state: {} });
+  // If viewing all, let's sort pending orders to the top, then by date
+  const orders = [...allOrders]
+    .filter((o) => {
+      if (paymentFilter === "pending") return !o.paid;
+      if (paymentFilter === "paid") return o.paid;
+      return true;
+    })
+    .sort((a, b) => {
+      if (statusFilter === "") {
+        if (a.status === "Pendiente" && b.status !== "Pendiente") return -1;
+        if (a.status !== "Pendiente" && b.status === "Pendiente") return 1;
       }
-    }
-  }, [location.state, orders, navigate]);
+      return 0; // Existing sort by date was done in Firebase/ReactQuery
+    });
 
-  // Sync selectedOrder with updated orders list
-  useEffect(() => {
-    if (selectedOrder) {
-      const updated = orders.find((o) => o.id === selectedOrder.id);
-      if (updated) {
-        setSelectedOrder(updated);
-      } else if (viewMode === "detail" || viewMode === "edit") {
-        // Order was deleted or no longer exists in current filter
-        setSelectedOrder(null);
-        setViewMode("list");
-      }
-    }
-  }, [orders, selectedOrder, viewMode]);
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+  const paginatedOrders = orders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
 
   const handleStatusChange = async (
     id: string,
@@ -142,66 +133,6 @@ export default function Dashboard() {
     );
   }
 
-  if (viewMode === "edit" && selectedOrder) {
-    return (
-      <CreateOrder
-        editOrder={selectedOrder}
-        onClose={() => setViewMode("detail")}
-        onCreated={() => setViewMode("list")}
-      />
-    );
-  }
-
-  if (viewMode === "detail" && selectedOrder) {
-    return (
-      <OrderDetail
-        order={selectedOrder}
-        onBack={() => {
-          setSelectedOrder(null);
-          setViewMode("list");
-        }}
-        onEdit={() => setViewMode("edit")}
-        onRefresh={() => {}}
-        roasts={orderRoasts}
-        onCreateRoast={() => setViewMode("roast")}
-        onViewRoast={(roast) => {
-          setSelectedRoast(roast);
-          setViewMode("roastDetail");
-        }}
-      />
-    );
-  }
-
-  if (viewMode === "roastDetail" && selectedRoast) {
-    return (
-      <RoastDetail
-        roast={selectedRoast}
-        onBack={() => {
-          setSelectedRoast(null);
-          setViewMode("detail");
-        }}
-        onViewOrder={(orderId) => {
-          // Already on this page, just find the order
-          const order = orders.find((o) => o.id === orderId);
-          if (order) {
-            setSelectedOrder(order);
-            setSelectedRoast(null);
-            setViewMode("detail");
-          }
-        }}
-      />
-    );
-  }
-
-  if (viewMode === "roast" && selectedOrder) {
-    return (
-      <RoastForm
-        onClose={() => setViewMode("detail")}
-        onCreated={() => setViewMode("detail")}
-        preSelectedOrderId={selectedOrder.id}
-      />
-    );
-  }
 
   // --- LIST VIEW ---
   return (
@@ -234,16 +165,32 @@ export default function Dashboard() {
             w={{ base: "100%", sm: "200px" }}
             bg="white"
             value={statusFilter}
-            onChange={(e) =>
-              setStatusFilter(e.target.value as OrderStatus | "")
-            }
+            onChange={(e) => {
+              setStatusFilter(e.target.value as OrderStatus | "");
+              setCurrentPage(1);
+            }}
             borderColor="gray.300"
             size="sm"
           >
-            <option value="">Todas</option>
+            <option value="">Todas (Estado)</option>
             <option value="Pendiente">Pendientes</option>
             <option value="Tostado">Tostados</option>
             <option value="Entregado">Entregados</option>
+          </Select>
+          <Select
+            w={{ base: "100%", sm: "200px" }}
+            bg="white"
+            value={paymentFilter}
+            onChange={(e) => {
+              setPaymentFilter(e.target.value as "all" | "pending" | "paid");
+              setCurrentPage(1);
+            }}
+            borderColor="gray.300"
+            size="sm"
+          >
+            <option value="all">Pagos: Todos</option>
+            <option value="pending">Pago Pendiente</option>
+            <option value="paid">Pagado</option>
           </Select>
           <Button
             leftIcon={<Plus size={16} />}
@@ -290,7 +237,7 @@ export default function Dashboard() {
         </Flex>
       ) : (
         <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} spacing={4}>
-          {orders.map((order) => (
+          {paginatedOrders.map((order) => (
             <Box
               key={order.id}
               bg="white"
@@ -302,10 +249,7 @@ export default function Dashboard() {
               transition="all 0.2s"
               _hover={{ shadow: "lg", transform: "translateY(-2px)" }}
               cursor="pointer"
-              onClick={() => {
-                setSelectedOrder(order);
-                setViewMode("detail");
-              }}
+              onClick={() => navigate(`/order/${order.id}`)}
             >
               <Flex justify="space-between" align="start" mb={3}>
                 <VStack align="start" spacing={1}>
@@ -465,6 +409,31 @@ export default function Dashboard() {
             </Box>
           ))}
         </SimpleGrid>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <Flex justify="center" mt={8}>
+          <ButtonGroup size="sm" isAttached variant="outline">
+            <Button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              isDisabled={currentPage === 1}
+              leftIcon={<ChevronLeft size={16} />}
+            >
+              Anterior
+            </Button>
+            <Button isDisabled>
+              Página {currentPage} de {totalPages}
+            </Button>
+            <Button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              isDisabled={currentPage === totalPages}
+              rightIcon={<ChevronRight size={16} />}
+            >
+              Siguiente
+            </Button>
+          </ButtonGroup>
+        </Flex>
       )}
     </Box>
   );
