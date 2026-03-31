@@ -28,9 +28,8 @@ import {
   Share2,
 } from "lucide-react";
 import { Roast } from "../types/roast";
-import { deleteCoffeeBean } from "../services/inventoryService";
 import { getRoastsByBean } from "../services/roastService";
-import { useCoffeeBean } from "../hooks/useInventory";
+import { useCoffeeBean, useDeleteCoffeeBean } from "../hooks/useInventory";
 import BeanForm from "./BeanForm";
 import RoastForm from "./RoastForm";
 
@@ -42,6 +41,7 @@ export default function BeanDetail() {
   const [isRoasting, setIsRoasting] = useState(false);
 
   const { data: bean, isLoading } = useCoffeeBean(id || "");
+  const deleteMutation = useDeleteCoffeeBean();
 
   const [roastHistory, setRoastHistory] = useState<Roast[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -89,7 +89,7 @@ export default function BeanDetail() {
     )
       return;
     try {
-      await deleteCoffeeBean(bean.id!);
+      await deleteMutation.mutateAsync(bean.id!);
       toast({ title: "Grano eliminado", status: "info" });
       navigate("/inventory");
     } catch {

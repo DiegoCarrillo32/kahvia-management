@@ -32,12 +32,12 @@ import {
   Share2,
 } from "lucide-react";
 import { OrderStatus } from "../types/order";
-import {
-  markOrderAsRoasted,
-  markOrderAsDelivered,
-  deleteOrder,
-} from "../services/orderService";
-import { useOrder } from "../hooks/useOrders";
+import { 
+  useOrder,
+  useMarkOrderAsRoasted,
+  useMarkOrderAsDelivered,
+  useDeleteOrder
+} from "../hooks/useOrders";
 import { useRoastsByOrder } from "../hooks/useRoasts";
 import CreateOrder from "./CreateOrder";
 import RoastForm from "./RoastForm";
@@ -52,6 +52,9 @@ export default function OrderDetail() {
   const { data: order, isLoading } = useOrder(id || "");
   const { data: roasts = [] } = useRoastsByOrder(id || "");
 
+  const markAsRoastedMutation = useMarkOrderAsRoasted();
+  const markAsDeliveredMutation = useMarkOrderAsDelivered();
+  const deleteMutation = useDeleteOrder();
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -94,8 +97,8 @@ export default function OrderDetail() {
 
   const handleStatusChange = async (newStatus: "Tostado" | "Entregado") => {
     try {
-      if (newStatus === "Tostado") await markOrderAsRoasted(order!.id!);
-      if (newStatus === "Entregado") await markOrderAsDelivered(order!.id!);
+      if (newStatus === "Tostado") await markAsRoastedMutation.mutateAsync(order!.id!);
+      if (newStatus === "Entregado") await markAsDeliveredMutation.mutateAsync(order!.id!);
       toast({
         title: `Orden marcada como ${newStatus}`,
         status: "success",
@@ -113,7 +116,7 @@ export default function OrderDetail() {
     )
       return;
     try {
-      await deleteOrder(order!.id!);
+      await deleteMutation.mutateAsync(order!.id!);
       toast({ title: "Orden eliminada", status: "info" });
       navigate("/");
     } catch {

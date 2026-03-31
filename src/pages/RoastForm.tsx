@@ -18,7 +18,7 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { createRoast } from "../services/roastService";
+import { useCreateRoast } from "../hooks/useRoasts";
 import { getInventory } from "../services/inventoryService";
 import { getOrders } from "../services/orderService";
 import { CoffeeBean } from "../types/inventory";
@@ -136,6 +136,8 @@ export default function RoastForm({
     setIngredients(ingredients.filter((_, i) => i !== idx));
   };
 
+  const { mutateAsync: createRoastMutation } = useCreateRoast();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -165,7 +167,7 @@ export default function RoastForm({
     setSubmitting(true);
     try {
       const selectedOrder = orders.find((o) => o.id === selectedOrderId);
-      await createRoast({
+      await createRoastMutation({
         ingredients,
         inputWeightGrams: inputWeight,
         outputWeightGrams: outputWeight,

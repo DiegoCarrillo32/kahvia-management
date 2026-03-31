@@ -13,7 +13,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
-import { addCoffeeBean, updateCoffeeBean } from "../services/inventoryService";
+import { useAddCoffeeBean, useUpdateCoffeeBean } from "../hooks/useInventory";
 import { CoffeeBean } from "../types/inventory";
 
 interface BeanFormProps {
@@ -26,6 +26,9 @@ export default function BeanForm({ onClose, onSaved, editBean }: BeanFormProps) 
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const isEditing = !!editBean;
+
+  const { mutateAsync: addMutation } = useAddCoffeeBean();
+  const { mutateAsync: updateMutation } = useUpdateCoffeeBean();
 
   const [form, setForm] = useState({
     name: editBean?.name || "",
@@ -57,10 +60,10 @@ export default function BeanForm({ onClose, onSaved, editBean }: BeanFormProps) 
     setSubmitting(true);
     try {
       if (isEditing && editBean?.id) {
-        await updateCoffeeBean(editBean.id, form);
+        await updateMutation({ id: editBean.id, data: form });
         toast({ title: "Grano actualizado", status: "success" });
       } else {
-        await addCoffeeBean(form);
+        await addMutation(form);
         toast({ title: "Grano agregado", status: "success" });
       }
       onSaved();

@@ -26,8 +26,7 @@ import {
   ChevronRight,
   Share2,
 } from "lucide-react";
-import { useRoast } from "../hooks/useRoasts";
-import { deleteRoast } from "../services/roastService";
+import { useRoast, useDeleteRoast } from "../hooks/useRoasts";
 
 export default function RoastDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +34,7 @@ export default function RoastDetail() {
   const toast = useToast();
 
   const { data: roast, isLoading } = useRoast(id || "");
+  const deleteMutation = useDeleteRoast();
 
   const formatDate = (timestamp: unknown) => {
     if (!timestamp) return "No registrado";
@@ -68,7 +68,7 @@ export default function RoastDetail() {
     )
       return;
     try {
-      await deleteRoast(roast.id!);
+      await deleteMutation.mutateAsync(roast.id!);
       toast({ title: "Tostado eliminado", status: "info" });
       navigate("/roasts");
     } catch {

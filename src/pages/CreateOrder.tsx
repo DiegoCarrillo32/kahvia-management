@@ -15,7 +15,7 @@ import {
   IconButton,
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
-import { createOrder, updateOrder } from "../services/orderService";
+import { useCreateOrder, useUpdateOrder } from "../hooks/useOrders";
 import { Order, CoffeeStyle, CoffeeAmount } from "../types/order";
 
 const COFFEE_STYLES: CoffeeStyle[] = [
@@ -37,6 +37,9 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
   const isEditing = !!editOrder;
+
+  const { mutateAsync: createMutation } = useCreateOrder();
+  const { mutateAsync: updateMutation } = useUpdateOrder();
 
   const [form, setForm] = useState({
     clientName: editOrder?.clientName || "",
@@ -67,10 +70,10 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
     setSubmitting(true);
     try {
       if (isEditing && editOrder?.id) {
-        await updateOrder(editOrder.id, form);
+        await updateMutation({ orderId: editOrder.id, data: form });
         toast({ title: "Orden actualizada", status: "success" });
       } else {
-        await createOrder(form);
+        await createMutation(form);
         toast({ title: "Orden creada exitosamente", status: "success" });
       }
       onCreated();
