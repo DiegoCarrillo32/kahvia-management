@@ -8,6 +8,7 @@ export interface RoastIngredient {
 
 export interface Roast {
   id?: string;
+  userId: string;
   orderId?: string;
   orderClientName?: string;
   ingredients: RoastIngredient[];

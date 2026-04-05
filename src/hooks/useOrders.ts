@@ -67,3 +67,11 @@ export const useOrder = (orderId: string) => {
     enabled: !!orderId,
   });
 };
+
+export const useOrdersByClient = (clientId: string) => {
+  return useQuery({
+    queryKey: ['orders', 'client', clientId],
+    queryFn: () => orderService.getOrdersByClient(clientId),
+    enabled: !!clientId,
+  });
+};

@@ -8,7 +8,7 @@ vi.mock('firebase/app', () => ({
 }));
 
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(() => ({})),
+  getAuth: vi.fn(() => ({ currentUser: { uid: 'test-user-id' } })),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -22,6 +22,7 @@ vi.mock('firebase/firestore', () => ({
   deleteDoc: vi.fn(() => Promise.resolve()),
   query: vi.fn(),
   orderBy: vi.fn(),
+  where: vi.fn(),
   serverTimestamp: vi.fn(() => 'mock-timestamp'),
 }));
 

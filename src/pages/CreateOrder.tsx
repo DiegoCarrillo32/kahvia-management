@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { useCreateOrder, useUpdateOrder } from "../hooks/useOrders";
+import { useClients } from "../hooks/useClients";
 import { Order, CoffeeStyle, CoffeeAmount } from "../types/order";
 
 const COFFEE_STYLES: CoffeeStyle[] = [
@@ -40,8 +41,10 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
 
   const { mutateAsync: createMutation } = useCreateOrder();
   const { mutateAsync: updateMutation } = useUpdateOrder();
+  const { data: clients = [] } = useClients();
 
   const [form, setForm] = useState({
+    clientId: editOrder?.clientId || "manual",
     clientName: editOrder?.clientName || "",
     clientPhone: editOrder?.clientPhone || "",
     deliveryAddress: editOrder?.deliveryAddress || "",
@@ -54,6 +57,30 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
 
   const update = (field: string, value: string | number | boolean) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  const handleClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const val = e.target.value;
+    if (val === "manual") {
+      setForm((prev) => ({
+        ...prev,
+        clientId: "manual",
+        clientName: "",
+        clientPhone: "",
+        deliveryAddress: "",
+      }));
+    } else {
+      const selected = clients.find((c) => c.id === val);
+      if (selected) {
+        setForm((prev) => ({
+          ...prev,
+          clientId: selected.id || "",
+          clientName: selected.name,
+          clientPhone: selected.phoneNumber,
+          deliveryAddress: selected.deliveryDirection,
+        }));
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,11 +96,23 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
 
     setSubmitting(true);
     try {
+      const payload: Omit<Order, "id" | "createdAt" | "roastedAt" | "deliveredAt" | "status" | "userId"> = {
+        clientName: form.clientName,
+        clientPhone: form.clientPhone,
+        deliveryAddress: form.deliveryAddress,
+        orderPrice: form.orderPrice,
+        coffeeStyle: form.coffeeStyle,
+        amount: form.amount,
+        notes: form.notes,
+        paid: form.paid,
+        ...(form.clientId !== "manual" ? { clientId: form.clientId } : {})
+      };
+
       if (isEditing && editOrder?.id) {
-        await updateMutation({ orderId: editOrder.id, data: form });
+        await updateMutation({ orderId: editOrder.id, data: payload });
         toast({ title: "Orden actualizada", status: "success" });
       } else {
-        await createMutation(form);
+        await createMutation(payload);
         toast({ title: "Orden creada exitosamente", status: "success" });
       }
       onCreated();
@@ -114,6 +153,20 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
         maxW="800px"
       >
         <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4} mb={4}>
+          <FormControl gridColumn={{ md: "span 2" }}>
+            <FormLabel fontSize="sm" color="gray.600">
+              Seleccionar Cliente (Opcional)
+            </FormLabel>
+            <Select value={form.clientId || "manual"} onChange={handleClientChange}>
+              <option value="manual">-- Crear pedido manual --</option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+
           <FormControl isRequired>
             <FormLabel fontSize="sm" color="gray.600">
               Nombre del cliente
@@ -122,6 +175,7 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
               placeholder="Juan Pérez"
               value={form.clientName}
               onChange={(e) => update("clientName", e.target.value)}
+              isDisabled={form.clientId !== "manual"}
             />
           </FormControl>
 
@@ -133,6 +187,7 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
               placeholder="+52 123 456 7890"
               value={form.clientPhone}
               onChange={(e) => update("clientPhone", e.target.value)}
+              isDisabled={form.clientId !== "manual"}
             />
           </FormControl>
 
@@ -144,6 +199,7 @@ export default function CreateOrder({ onClose, onCreated, editOrder }: CreateOrd
               placeholder="Calle, número, colonia, ciudad"
               value={form.deliveryAddress}
               onChange={(e) => update("deliveryAddress", e.target.value)}
+              isDisabled={form.clientId !== "manual"}
             />
           </FormControl>
 

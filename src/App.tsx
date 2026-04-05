@@ -20,10 +20,13 @@ import {
   Package,
   BarChart3,
   Flame,
+  Network
 } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Roasts from "./pages/Roasts";
+import Clients from "./pages/Clients";
+import Partnerships from "./pages/Partnerships";
 import Metrics from "./pages/Metrics";
 import Login from "./pages/Login";
 import OrderDetail from "./pages/OrderDetail";
@@ -87,6 +90,22 @@ const MobileBottomNav = () => {
           Inventario
         </Flex>
       </Link>
+      <Link to="/clients">
+        <Flex
+          direction="column"
+          align="center"
+          px={3}
+          py={1}
+          borderRadius="md"
+          bg={isActive("/clients") ? "whiteAlpha.200" : "transparent"}
+          color="white"
+          fontSize="xs"
+          gap={1}
+        >
+          <BarChart3 size={20} />
+          Clientes
+        </Flex>
+      </Link>
       <Link to="/roasts">
         <Flex
           direction="column"
@@ -117,6 +136,22 @@ const MobileBottomNav = () => {
         >
           <BarChart3 size={20} />
           Métricas
+        </Flex>
+      </Link>
+      <Link to="/partnerships">
+        <Flex
+          direction="column"
+          align="center"
+          px={3}
+          py={1}
+          borderRadius="md"
+          bg={isActive("/partnerships") ? "whiteAlpha.200" : "transparent"}
+          color="white"
+          fontSize="xs"
+          gap={1}
+        >
+          <Network size={20} />
+          B2B
         </Flex>
       </Link>
     </Flex>
@@ -156,6 +191,13 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           Inventario
         </Link>
         <Link
+          to="/clients"
+          className="hover:text-warm-roast transition-colors py-2"
+          onClick={onClose}
+        >
+          Clientes
+        </Link>
+        <Link
           to="/roasts"
           className="hover:text-warm-roast transition-colors py-2"
           onClick={onClose}
@@ -168,6 +210,13 @@ const SidebarContent = ({ onClose }: { onClose?: () => void }) => {
           onClick={onClose}
         >
           Métricas
+        </Link>
+        <Link
+          to="/partnerships"
+          className="hover:text-warm-roast transition-colors py-2"
+          onClick={onClose}
+        >
+          B2B
         </Link>
       </nav>
       <Button
@@ -300,6 +349,16 @@ function App() {
               }
             />
             <Route
+              path="/clients"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Clients />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/roasts"
               element={
                 <PrivateRoute>
@@ -315,6 +374,16 @@ function App() {
                 <PrivateRoute>
                   <Layout>
                     <Metrics />
+                  </Layout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/partnerships"
+              element={
+                <PrivateRoute>
+                  <Layout>
+                    <Partnerships />
                   </Layout>
                 </PrivateRoute>
               }

@@ -1,5 +1,6 @@
 export interface CoffeeBean {
   id?: string;
+  userId: string;
   name: string;
   origin: string;
   roastProfile: string;

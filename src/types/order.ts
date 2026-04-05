@@ -4,6 +4,8 @@ export type OrderStatus = 'Pendiente' | 'Tostado' | 'Entregado';
 
 export interface Order {
   id?: string;
+  userId: string;
+  clientId?: string;
   clientName: string;
   clientPhone: string;
   deliveryAddress: string;

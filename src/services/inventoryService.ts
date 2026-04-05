@@ -1,20 +1,25 @@
-import { collection, doc, getDoc, getDocs, updateDoc, query, orderBy, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, doc, getDoc, getDocs, updateDoc, query, serverTimestamp, addDoc, deleteDoc, where } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
 import { CoffeeBean } from '../types/inventory';
 
 const COLLECTION_NAME = 'inventory';
 
 export const getInventory = async (): Promise<CoffeeBean[]> => {
+  if (!auth.currentUser) return [];
   const invRef = collection(db, COLLECTION_NAME);
-  const q = query(invRef, orderBy('name', 'asc'));
+  const q = query(invRef, where('userId', '==', auth.currentUser.uid));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoffeeBean));
+  const all = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CoffeeBean));
+  all.sort((a, b) => a.name.localeCompare(b.name));
+  return all;
 };
 
-export const addCoffeeBean = async (bean: Omit<CoffeeBean, 'id' | 'updatedAt' | 'createdAt'>) => {
+export const addCoffeeBean = async (bean: Omit<CoffeeBean, 'id' | 'updatedAt' | 'createdAt' | 'userId'>) => {
+  if (!auth.currentUser) throw new Error("User not authenticated");
   const invRef = collection(db, COLLECTION_NAME);
   await addDoc(invRef, {
     ...bean,
+    userId: auth.currentUser.uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

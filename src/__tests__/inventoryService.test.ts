@@ -7,7 +7,7 @@ vi.mock('firebase/app', () => ({
 }));
 
 vi.mock('firebase/auth', () => ({
-  getAuth: vi.fn(() => ({})),
+  getAuth: vi.fn(() => ({ currentUser: { uid: 'test-user-id' } })),
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -20,6 +20,7 @@ vi.mock('firebase/firestore', () => ({
   deleteDoc: vi.fn(() => Promise.resolve()),
   query: vi.fn(),
   orderBy: vi.fn(),
+  where: vi.fn(),
   serverTimestamp: vi.fn(() => 'mock-timestamp'),
 }));
 
@@ -58,9 +59,9 @@ describe('inventoryService', () => {
       const beans = await getInventory();
 
       expect(beans).toHaveLength(2);
-      expect(beans[0].id).toBe('bean-1');
-      expect(beans[0].name).toBe('Caturra');
-      expect(beans[1].amountGrams).toBe(800);
+      expect(beans[1].id).toBe('bean-1');
+      expect(beans[1].name).toBe('Caturra');
+      expect(beans[0].amountGrams).toBe(800);
     });
 
     it('should return empty array when no beans', async () => {

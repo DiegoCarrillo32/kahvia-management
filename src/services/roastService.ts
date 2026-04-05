@@ -5,19 +5,20 @@ import {
   getDocs,
   deleteDoc,
   query,
-  orderBy,
   serverTimestamp,
   writeBatch,
+  where
 } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, auth } from '../lib/firebase';
 import { Roast } from '../types/roast';
 import { getInventory } from './inventoryService';
 
 const COLLECTION_NAME = 'roasts';
 
 export const createRoast = async (
-  roast: Omit<Roast, 'id' | 'createdAt' | 'lossPercentage'>
+  roast: Omit<Roast, 'id' | 'createdAt' | 'lossPercentage' | 'userId'>
 ) => {
+  if (!auth.currentUser) throw new Error("User not authenticated");
   // Calculate loss percentage
   const lossPercentage =
     roast.inputWeightGrams > 0
@@ -40,6 +41,7 @@ export const createRoast = async (
   const roastData = Object.fromEntries(
     Object.entries({
       ...roast,
+      userId: auth.currentUser.uid,
       lossPercentage,
       createdAt: serverTimestamp(),
     }).filter(([, v]) => v !== undefined)
@@ -61,10 +63,17 @@ export const createRoast = async (
 };
 
 export const getRoasts = async (): Promise<Roast[]> => {
+  if (!auth.currentUser) return [];
   const roastsRef = collection(db, COLLECTION_NAME);
-  const q = query(roastsRef, orderBy('roastedAt', 'desc'));
+  const q = query(roastsRef, where('userId', '==', auth.currentUser.uid));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Roast));
+  const all = snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Roast));
+  all.sort((a, b) => {
+    const timeA = (a.roastedAt as { toMillis?: () => number })?.toMillis?.() || 0;
+    const timeB = (b.roastedAt as { toMillis?: () => number })?.toMillis?.() || 0;
+    return timeB - timeA;
+  });
+  return all;
 };
 
 export const getRoastsByBean = async (beanId: string): Promise<Roast[]> => {

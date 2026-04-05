@@ -8,6 +8,7 @@ describe('Type Definitions', () => {
     it('should allow creating a bean with all fields', () => {
       const bean: CoffeeBean = {
         id: 'bean-1',
+        userId: 'test-user',
         name: 'Caturra',
         origin: 'Tarrazú',
         roastProfile: 'Medio',
@@ -26,6 +27,7 @@ describe('Type Definitions', () => {
 
     it('should allow creating a bean with only required fields', () => {
       const bean: CoffeeBean = {
+        userId: 'test-user',
         name: 'Test',
         origin: 'Test',
         roastProfile: 'Claro',
@@ -47,6 +49,7 @@ describe('Type Definitions', () => {
 
       const roast: Roast = {
         id: 'roast-1',
+        userId: 'test-user',
         ingredients: [ingredient],
         inputWeightGrams: 1000,
         outputWeightGrams: 850,
@@ -61,6 +64,7 @@ describe('Type Definitions', () => {
 
     it('should support blend roast with multiple beans', () => {
       const roast: Roast = {
+        userId: 'test-user',
         ingredients: [
           { beanId: 'b1', beanName: 'Caturra', gramsUsed: 600 },
           { beanId: 'b2', beanName: 'Bourbon', gramsUsed: 400 },
@@ -86,6 +90,7 @@ describe('Type Definitions', () => {
 
     it('should allow roast without order association', () => {
       const roast: Roast = {
+        userId: 'test-user',
         ingredients: [{ beanId: 'b1', beanName: 'Caturra', gramsUsed: 500 }],
         inputWeightGrams: 500,
         outputWeightGrams: 420,
@@ -108,6 +113,7 @@ describe('Type Definitions', () => {
     it('should allow creating an order with all fields', () => {
       const order: Order = {
         id: 'order-1',
+        userId: 'test-user',
         clientName: 'Juan',
         clientPhone: '50612345678',
         deliveryAddress: 'San José Centro',

@@ -11,6 +11,7 @@ export const useRoasts = () => {
 export const useCreateRoast = () => {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: ['createRoast'],
     mutationFn: roastService.createRoast,
     onSuccess: async () => {
       await Promise.all([
